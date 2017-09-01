@@ -1,7 +1,7 @@
-import yaml
 import os
 import subprocess
 import shutil
+import yaml
 from threading import Thread
 from queue import Queue
 
@@ -20,15 +20,15 @@ def get_yaml_dict(yaml_file):
     return yaml_dict
 
 
-def download_from_yaml(yaml_file, base_dir):
-    """Take every value in $yaml_file as a git url and clone it to a directory
-    of the same name as the corresponding key within $base_dir."""
+def yaml_to_job_list(yaml_file, base_dir):
+    """Return a job_list consisting of git repos from $yaml_file as well as
+    their base target directory."""
     yaml_dict = get_yaml_dict(yaml_file)
     job_list = []
     for key, value in yaml_dict.items():
         job_list.append((value, rel_to_cwd(base_dir, key)))
 
-    git_clone_all(job_list)
+    return job_list
 
 
 def git_clone(git_url, path):
@@ -61,9 +61,8 @@ def git_clone_worker(queue):
         queue.task_done()
 
 
-def git_clone_all(job_list):
-    """Run git_clone for every job in $job_list. Every job is represented as a
-    tuple that unpacks to git_url + path."""
+def git_clone_job_list(job_list):
+    """Deal with all git clone jobs on $queue."""
     queue = Queue()
     for job in job_list:
         queue.put(job)
@@ -76,7 +75,7 @@ def git_clone_all(job_list):
 
     queue.join()
 
-    for job in range(50):
+    for _ in range(40):
         queue.put(None)
 
     for thread in threads:
@@ -85,12 +84,15 @@ def git_clone_all(job_list):
 
 def update():
     print('Cloning sources…')
-    download_from_yaml(rel_to_cwd('sources.yaml'),
-                       rel_to_cwd('sources'))
+    jobs = yaml_to_job_list(rel_to_cwd('sources.yaml'),
+                            rel_to_cwd('sources'))
+    git_clone_job_list(jobs)
+
     print('Cloning templates…')
-    download_from_yaml(rel_to_cwd('sources', 'templates', 'list.yaml'),
-                       rel_to_cwd('templates'))
+    jobs = yaml_to_job_list(rel_to_cwd('sources', 'templates', 'list.yaml'),
+                            rel_to_cwd('templates'))
     print('Cloning schemes…')
-    download_from_yaml(rel_to_cwd('sources', 'schemes', 'list.yaml'),
-                       rel_to_cwd('schemes'))
+    jobs.extend(yaml_to_job_list(rel_to_cwd('sources', 'schemes', 'list.yaml'),
+                                 rel_to_cwd('schemes')))
+    git_clone_job_list(jobs)
     print('Completed updating repositories.')
