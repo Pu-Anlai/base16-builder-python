@@ -2,6 +2,7 @@ import builder
 import pytest
 import os
 import shutil
+import glob
 
 
 @pytest.fixture(scope='module')
@@ -25,8 +26,12 @@ def test_update(clean_dir):
                    template_path: builder.rel_to_cwd('templates'),
                    scheme_path: builder.rel_to_cwd('schemes')}
 
-    # assume there's a corresponding directory for every key in a yaml file
+    # assume there's a corresponding git directory for every key in a yaml file
     for yaml_file, dir_ in directories.items():
         yaml_dict = builder.get_yaml_dict(yaml_file)
         for key in yaml_dict.keys():
+            # assert there's a corresponding directory
             assert key in os.listdir(dir_)
+            key_dir = os.path.join(dir_, key)
+            # assert it's a git repo
+            assert '.git' in os.listdir(key_dir)
