@@ -1,10 +1,10 @@
 import os
 import subprocess
 import shutil
-import shared
 from shared import get_yaml_dict, rel_to_cwd
 from threading import Thread
 from queue import Queue
+
 
 def yaml_to_job_list(yaml_file, base_dir):
     """Return a job_list consisting of git repos from $yaml_file as well as
