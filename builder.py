@@ -1,98 +1,128 @@
 import os
-import subprocess
+import glob
 import shutil
-import yaml
-from threading import Thread
-from queue import Queue
-
-CWD = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+import pystache
+from shared import get_yaml_dict, rel_to_cwd
 
 
-def rel_to_cwd(*args):
-    """Get absolute real path of $path with $CWD as base."""
-    return os.path.join(CWD, *args)
+class TemplateGroup(object):
+    """Representation of a template."""
+
+    def __init__(self, base_path):
+        self.base_path = base_path
+        self.name = os.path.basename(base_path)
+        self.templates = self.get_templates()
+
+    def get_templates(self):
+        """Return a list of template_dicts."""
+        config_path = rel_to_cwd(self.base_path, 'templates', 'config.yaml')
+        templates = get_yaml_dict(config_path)
+        for temp, sub in templates.items():
+            mustache_path = os.path.join(get_parent_dir(config_path),
+                                         f'{temp}.mustache')
+            sub['parsed'] = get_pystache_parsed(mustache_path)
+        return templates
 
 
-def get_yaml_dict(yaml_file):
-    with open(yaml_file, 'r') as f:
-        yaml_dict = yaml.safe_load(f.read())
-
-    return yaml_dict
-
-
-def yaml_to_job_list(yaml_file, base_dir):
-    """Return a job_list consisting of git repos from $yaml_file as well as
-    their base target directory."""
-    yaml_dict = get_yaml_dict(yaml_file)
-    job_list = []
-    for key, value in yaml_dict.items():
-        job_list.append((value, rel_to_cwd(base_dir, key)))
-
-    return job_list
+def transform_template(scheme, template):
+    """Apply $scheme to $template and return the result string."""
+    result = pystache.render(template, scheme)
+    return result
 
 
-def git_clone(git_url, path):
-    """Clone git repository at $git_url to $path."""
-    if os.path.exists(os.path.join(path, '.git')):
-        # get rid of local repo if it already exists
-        shutil.rmtree(path)
-
-    os.makedirs(path, exist_ok=True)
-    print('Start cloning from {}…'.format(git_url))
-    git_proc = subprocess.run(['git', 'clone', git_url, path],
-                              stderr=subprocess.PIPE)
-    if git_proc.returncode == 0:
-        print('Cloned {}.'.format(git_url))
-    else:
-        errmsg = git_proc.stderr.decode('utf-8')
-        print('Error cloning from {}:\n{}'.format(git_url,
-                                                  errmsg))
+def get_parent_dir(base_dir, level=1):
+    "Get the directory $level levels above $base_dir."
+    while level > 0:
+        base_dir = os.path.dirname(base_dir)
+        level -= 1
+    return base_dir
 
 
-def git_clone_worker(queue):
-    """Worker thread for picking up git clone jobs from $queue until it
-    receives None."""
-    while True:
-        job = queue.get()
-        if job is None:
-            break
-        git_url, path = job
-        git_clone(git_url, path)
-        queue.task_done()
+def get_pystache_parsed(mustache_file):
+    """Return a ParsedTemplate instance based on the contents of
+    $mustache_file."""
+    with open(mustache_file, 'r') as file_:
+        parsed = pystache.parse(file_.read())
+    return parsed
 
 
-def git_clone_job_list(job_list):
-    """Deal with all git clone jobs on $queue."""
-    queue = Queue()
-    for job in job_list:
-        queue.put(job)
-
-    threads = []
-    for _ in range(40):
-        thread = Thread(target=git_clone_worker, args=(queue, ))
-        thread.start()
-        threads.append(thread)
-
-    queue.join()
-
-    for _ in range(40):
-        queue.put(None)
-
-    for thread in threads:
-        thread.join()
+def get_template_dirs():
+    """Return a list of all templates."""
+    temp_glob = rel_to_cwd('templates', '**', 'templates', 'config.yaml')
+    temp_groups = glob.glob(temp_glob)
+    temp_groups = [get_parent_dir(path, 2) for path in temp_groups]
+    return temp_groups
 
 
-def update():
-    print('Cloning sources…')
-    jobs = yaml_to_job_list(rel_to_cwd('sources.yaml'),
-                            rel_to_cwd('sources'))
-    git_clone_job_list(jobs)
+def get_scheme_dirs():
+    scheme_glob = rel_to_cwd('schemes', '**', '*.yaml')
+    scheme_groups = glob.glob(scheme_glob)
+    scheme_groups = [get_parent_dir(path) for path in scheme_groups]
+    return scheme_groups
 
-    print('Cloning templates…')
-    jobs = yaml_to_job_list(rel_to_cwd('sources', 'templates', 'list.yaml'),
-                            rel_to_cwd('templates'))
-    print('Cloning schemes…')
-    jobs.extend(yaml_to_job_list(rel_to_cwd('sources', 'schemes', 'list.yaml'),
-                                 rel_to_cwd('schemes')))
-    git_clone_job_list(jobs)
-    print('Completed updating repositories.')
+
+def get_scheme_files(path):
+    """Return a list of all $yaml (scheme) files in $path."""
+    scheme_glob = os.path.join(path, '*.yaml')
+    return glob.glob(scheme_glob)
+
+
+def format_scheme(scheme, slug):
+    """Change $scheme so it can be applied to a template."""
+    scheme['scheme-name'] = scheme.pop('scheme')
+    scheme['scheme-author'] = scheme.pop('author')
+    scheme['scheme-slug'] = slug
+    bases = ['base{:02X}'.format(x) for x in range(0, 16)]
+    for base in bases:
+        scheme[f'{base}-hex'] = scheme.pop(base)
+        scheme[f'{base}-hex-r'] = scheme[f'{base}-hex'][0:2]
+        scheme[f'{base}-hex-g'] = scheme[f'{base}-hex'][2:4]
+        scheme[f'{base}-hex-b'] = scheme[f'{base}-hex'][4:6]
+
+        scheme[f'{base}-rgb-r'] = str(int(scheme[f'{base}-hex-r'], 16))
+        scheme[f'{base}-rgb-g'] = str(int(scheme[f'{base}-hex-g'], 16))
+        scheme[f'{base}-rgb-b'] = str(int(scheme[f'{base}-hex-b'], 16))
+
+        scheme[f'{base}-dec-r'] = str(int(scheme[f'{base}-rgb-r']) / 255)
+        scheme[f'{base}-dec-g'] = str(int(scheme[f'{base}-rgb-g']) / 255)
+        scheme[f'{base}-dec-b'] = str(int(scheme[f'{base}-rgb-b']) / 255)
+
+
+def slugify(scheme_file_name):
+    """Format $scheme_file_name to be used as a slug variable."""
+    if scheme_file_name.endswith('.yaml'):
+        scheme_file_name = scheme_file_name[:-5]
+    return scheme_file_name.lower().replace(' ', '-')
+
+
+def build_single(scheme_file, templates):
+    """Build colorscheme for a single $scheme_file using all TemplateGroup
+    instances in $templates."""
+    scheme = get_yaml_dict(scheme_file)
+    scheme_slug = slugify(os.path.basename(scheme_file))
+    format_scheme(scheme, scheme_slug)
+
+    for temp_group in templates:
+
+        for temp, sub in temp_group.templates.items():
+            output_dir = rel_to_cwd('output', temp_group.name,
+                                    sub['output'])
+            try:
+                os.makedirs(output_dir)
+            except FileExistsError:
+                shutil.rmtree(output_dir)
+                os.makedirs(output_dir)
+
+            filename = 'base16-{}{}'.format(scheme_slug, sub['extension'])
+            build_path = os.path.join(output_dir, filename)
+            with open(build_path, 'w') as file_:
+                file_content = pystache.render(sub['parsed'], scheme)
+                file_.write(file_content)
+
+
+def build(schemes=None, templates=None):
+    scheme_dirs = schemes or get_scheme_dirs()
+    template_dirs = templates or get_template_dirs()
+
+    scheme_files = [get_scheme_files(path) for path in scheme_dirs]
+    templates = [TemplateGroup(path) for path in template_dirs]
