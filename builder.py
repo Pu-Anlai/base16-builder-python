@@ -1,6 +1,8 @@
 import os
 import glob
 import shutil
+from threading import Thread
+from queue import Queue
 import pystache
 from shared import get_yaml_dict, rel_to_cwd
 
@@ -47,22 +49,23 @@ def get_pystache_parsed(mustache_file):
 
 
 def get_template_dirs():
-    """Return a list of all templates."""
+    """Return a set of all template directories."""
     temp_glob = rel_to_cwd('templates', '**', 'templates', 'config.yaml')
     temp_groups = glob.glob(temp_glob)
     temp_groups = [get_parent_dir(path, 2) for path in temp_groups]
-    return temp_groups
+    return set(temp_groups)
 
 
 def get_scheme_dirs():
+    """Return a set of all scheme directories."""
     scheme_glob = rel_to_cwd('schemes', '**', '*.yaml')
     scheme_groups = glob.glob(scheme_glob)
     scheme_groups = [get_parent_dir(path) for path in scheme_groups]
-    return scheme_groups
+    return set(scheme_groups)
 
 
 def get_scheme_files(path):
-    """Return a list of all $yaml (scheme) files in $path."""
+    """Return a list of all yaml (scheme) files in $path."""
     scheme_glob = os.path.join(path, '*.yaml')
     return glob.glob(scheme_glob)
 
@@ -102,6 +105,8 @@ def build_single(scheme_file, templates):
     scheme_slug = slugify(os.path.basename(scheme_file))
     format_scheme(scheme, scheme_slug)
 
+    scheme_name = scheme['scheme-name']
+    print('Building colorschemes for scheme "{}"…'.format(scheme_name))
     for temp_group in templates:
 
         for temp, sub in temp_group.templates.items():
@@ -110,8 +115,7 @@ def build_single(scheme_file, templates):
             try:
                 os.makedirs(output_dir)
             except FileExistsError:
-                shutil.rmtree(output_dir)
-                os.makedirs(output_dir)
+                pass
 
             filename = 'base16-{}{}'.format(scheme_slug, sub['extension'])
             build_path = os.path.join(output_dir, filename)
@@ -119,10 +123,54 @@ def build_single(scheme_file, templates):
                 file_content = pystache.render(sub['parsed'], scheme)
                 file_.write(file_content)
 
+    print('Built colorschemes for scheme "{}".'.format(scheme_name))
+
+
+def build_single_worker(queue, templates):
+    """Worker thread for picking up scheme files from $queue and building b16
+    templates using $templates until it receives None."""
+    while True:
+        scheme_file = queue.get()
+        if scheme_file is None:
+            break
+        build_single(scheme_file, templates)
+        queue.task_done()
+
+
+def build_job_list(scheme_files, templates):
+    """Use $scheme_files as a job lists and build base16 templates using
+    $templates."""
+    queue = Queue()
+    for scheme in scheme_files:
+        queue.put(scheme)
+
+    if len(scheme_files) < 40:
+        thread_num = len(scheme_files)
+    else:
+        thread_num = 40
+
+    threads = []
+    for _ in range(thread_num):
+        thread = Thread(target=build_single_worker, args=(queue, templates))
+        thread.start()
+        threads.append(thread)
+
+    queue.join()
+
+    for _ in range(thread_num):
+        queue.put(None)
+
+    for thread in threads:
+        thread.join()
+
 
 def build(schemes=None, templates=None):
     scheme_dirs = schemes or get_scheme_dirs()
     template_dirs = templates or get_template_dirs()
 
-    scheme_files = [get_scheme_files(path) for path in scheme_dirs]
     templates = [TemplateGroup(path) for path in template_dirs]
+    scheme_files = []
+    for scheme_path in scheme_dirs:
+        scheme_files.extend(get_scheme_files(scheme_path))
+
+    build_job_list(scheme_files, templates)

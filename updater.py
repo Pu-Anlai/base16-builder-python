@@ -53,15 +53,20 @@ def git_clone_job_list(job_list):
     for job in job_list:
         queue.put(job)
 
+    if len(job_list) < 40:
+        thread_num = len(job_list)
+    else:
+        thread_num = 40
+
     threads = []
-    for _ in range(40):
+    for _ in range(thread_num):
         thread = Thread(target=git_clone_worker, args=(queue, ))
         thread.start()
         threads.append(thread)
 
     queue.join()
 
-    for _ in range(40):
+    for _ in range(thread_num):
         queue.put(None)
 
     for thread in threads:

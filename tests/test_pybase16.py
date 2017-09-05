@@ -4,7 +4,6 @@ import shared
 import pytest
 import os
 import shutil
-import glob
 
 
 @pytest.fixture(scope='module')
@@ -50,9 +49,14 @@ def test_ressource_dirs(clean_dir):
         yaml_glob = shared.rel_to_cwd(scheme_path, '*.yaml')
         assert len(yaml_glob) >= 1
 
+    # assert get_scheme_files only returns yaml_files
+    scheme_files = []
+    for scheme_path in builder.get_scheme_dirs():
+        scheme_files.extend(builder.get_scheme_files(scheme_path))
+    for scheme_file in scheme_files:
+        assert scheme_file[-5:] == '.yaml'
 
-def test_build():
-    scheme_file = shared.rel_to_cwd('schemes', 'dracula', 'dracula.yaml')
-    template_dirs = builder.get_template_dirs()
-    templates = [builder.TemplateGroup(path) for path in template_dirs]
-    builder.build_single(scheme_file, templates)
+
+def test_build(clean_dir):
+    builder.build()
+    # TODO: real testing. check wether there's a file for every specified theme
