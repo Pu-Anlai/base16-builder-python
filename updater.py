@@ -6,6 +6,19 @@ from threading import Thread
 from queue import Queue
 
 
+def write_sources_file():
+    """Write a sources.yaml file to current working dir."""
+    file_content = (
+        'schemes: '
+        'https://github.com/chriskempson/base16-schemes-source.git\n'
+        'templates: '
+        'https://github.com/chriskempson/base16-templates-source.git'
+    )
+    file_path = rel_to_cwd('sources.yaml')
+    with open(file_path, 'w') as file_:
+        file_.write(file_content)
+
+
 def yaml_to_job_list(yaml_file, base_dir):
     """Return a job_list consisting of git repos from $yaml_file as well as
     their base target directory."""
@@ -74,9 +87,10 @@ def git_clone_job_list(job_list):
 
 
 def update():
+    print('Creating sources.yaml…')
+    write_sources_file()
     print('Cloning sources…')
-    sources_file = os.path.realpath(os.path.join(os.path.dirname(__file__),
-                                                 'sources.yaml'))
+    sources_file = rel_to_cwd('sources.yaml')
     jobs = yaml_to_job_list(sources_file, rel_to_cwd('sources'))
     git_clone_job_list(jobs)
 

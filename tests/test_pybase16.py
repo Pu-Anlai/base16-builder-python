@@ -14,7 +14,10 @@ def clean_dir():
     yield
     for file_ in os.listdir(shared.CWD):
         if file_ not in orig_struct:
-            shutil.rmtree(file_)
+            try:
+                shutil.rmtree(file_)
+            except NotADirectoryError:
+                os.remove(file_)
 
 
 def test_update(clean_dir):
