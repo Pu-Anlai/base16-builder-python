@@ -60,3 +60,14 @@ def test_ressource_dirs(clean_dir):
 def test_build(clean_dir):
     builder.build()
     # TODO: real testing. check wether there's a file for every specified theme
+    template_dirs = builder.get_template_dirs()
+    templates = [builder.TemplateGroup(path) for path in template_dirs]
+    for temp_group in templates:
+        for temp, sub in temp_group.templates.items():
+            output_dir = builder.rel_to_cwd('output', temp_group.name,
+                                            sub['output'])
+            # assert proper paths for each template were created
+            assert os.path.exists(output_dir)
+            # assert these directories aren't empty. so at least something
+            # happened
+            assert len(os.listdir(output_dir)) > 0

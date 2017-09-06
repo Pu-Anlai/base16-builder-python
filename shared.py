@@ -1,7 +1,7 @@
 import yaml
 import os
 
-CWD = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+CWD = os.path.realpath(os.getcwd())
 
 
 def rel_to_cwd(*args):

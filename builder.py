@@ -1,6 +1,5 @@
 import os
 import glob
-import shutil
 from threading import Thread
 from queue import Queue
 import pystache
@@ -8,7 +7,8 @@ from shared import get_yaml_dict, rel_to_cwd
 
 
 class TemplateGroup(object):
-    """Representation of a template."""
+    """Representation of a template group, i.e. a group of templates specified
+    in a config.yaml."""
 
     def __init__(self, base_path):
         self.base_path = base_path
@@ -16,7 +16,12 @@ class TemplateGroup(object):
         self.templates = self.get_templates()
 
     def get_templates(self):
-        """Return a list of template_dicts."""
+        """
+        Return a list of template_dicts based on the config.yaml in
+        $self.base_path.  Keys correspond to templates and values represent
+        further settings regarding each template. A pystache object containing
+        the parsed corresponding mustache file is added to the sub-dictionary.
+        """
         config_path = rel_to_cwd(self.base_path, 'templates', 'config.yaml')
         templates = get_yaml_dict(config_path)
         for temp, sub in templates.items():
@@ -137,9 +142,9 @@ def build_single_worker(queue, templates):
         queue.task_done()
 
 
-def build_job_list(scheme_files, templates):
+def build_from_job_list(scheme_files, templates):
     """Use $scheme_files as a job lists and build base16 templates using
-    $templates."""
+    $templates (a list of TemplateGroup objects)."""
     queue = Queue()
     for scheme in scheme_files:
         queue.put(scheme)
@@ -173,4 +178,4 @@ def build(schemes=None, templates=None):
     for scheme_path in scheme_dirs:
         scheme_files.extend(get_scheme_files(scheme_path))
 
-    build_job_list(scheme_files, templates)
+    build_from_job_list(scheme_files, templates)

@@ -75,8 +75,9 @@ def git_clone_job_list(job_list):
 
 def update():
     print('Cloning sources…')
-    jobs = yaml_to_job_list(rel_to_cwd('sources.yaml'),
-                            rel_to_cwd('sources'))
+    sources_file = os.path.realpath(os.path.join(os.path.dirname(__file__),
+                                                 'sources.yaml'))
+    jobs = yaml_to_job_list(sources_file, rel_to_cwd('sources'))
     git_clone_job_list(jobs)
 
     print('Cloning templates…')
