@@ -169,8 +169,8 @@ def build_from_job_list(scheme_files, templates):
         thread.join()
 
 
-def build(schemes=None, templates=None):
-    scheme_dirs = schemes or get_scheme_dirs()
+def build(templates=None):
+    scheme_dirs = get_scheme_dirs()
     template_dirs = templates or get_template_dirs()
 
     templates = [TemplateGroup(path) for path in template_dirs]
@@ -179,3 +179,4 @@ def build(schemes=None, templates=None):
         scheme_files.extend(get_scheme_files(scheme_path))
 
     build_from_job_list(scheme_files, templates)
+    print('Finished building process.')

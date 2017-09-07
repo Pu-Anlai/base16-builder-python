@@ -3,5 +3,6 @@ sources
 schemes
 output
 templates
+sources.yaml
 .tags
 .cache
