@@ -6,6 +6,10 @@ import pystache
 from shared import get_yaml_dict, rel_to_cwd
 
 
+class ResourceError(Exception):
+    pass
+
+
 class TemplateGroup(object):
     """Representation of a template group, i.e. a group of templates specified
     in a config.yaml."""
@@ -177,6 +181,11 @@ def build(templates=None):
     scheme_files = []
     for scheme_path in scheme_dirs:
         scheme_files.extend(get_scheme_files(scheme_path))
+
+    # raise ResourceError if there is not at least one template or scheme
+    # to work with
+    if not templates or not scheme_files:
+        raise ResourceError
 
     build_from_job_list(scheme_files, templates)
     print('Finished building process.')
