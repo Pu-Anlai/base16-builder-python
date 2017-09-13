@@ -14,7 +14,9 @@ def count_arguments(*args):
 
 def update_mode(arg_namespace):
     """Check command line arguments and run update function."""
-    if count_arguments(*arg_namespace):
+    if count_arguments(arg_namespace.file,
+                       arg_namespace.scheme,
+                       arg_namespace.template):
         print("Update operation doesn't allow for any arguments. Ignored.")
         sys.exit(1)
     else:
