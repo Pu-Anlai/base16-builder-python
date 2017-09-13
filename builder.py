@@ -3,7 +3,7 @@ import glob
 from threading import Thread
 from queue import Queue
 import pystache
-from shared import get_yaml_dict, rel_to_cwd
+from shared import get_yaml_dict, rel_to_cwd, ResourceError
 
 
 class TemplateGroup(object):
@@ -115,7 +115,7 @@ def build_single(scheme_file, templates):
     print('Building colorschemes for scheme "{}"…'.format(scheme_name))
     for temp_group in templates:
 
-        for temp, sub in temp_group.templates.items():
+        for _, sub in temp_group.templates.items():
             output_dir = rel_to_cwd('output', temp_group.name,
                                     sub['output'])
             try:

@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import shutil
 from threading import Thread
@@ -87,6 +88,11 @@ def git_clone_job_list(job_list):
 
 
 def update():
+    """Update function to be called from cli.py"""
+    if not shutil.which('git'):
+        print('Git executable not found in $PATH.')
+        sys.exit(1)
+
     print('Creating sources.yaml…')
     write_sources_file()
     print('Cloning sources…')

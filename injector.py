@@ -1,3 +1,4 @@
+import sys
 import re
 import pystache
 from shared import rel_to_cwd, ResourceError, get_yaml_dict
@@ -108,7 +109,9 @@ def inject_into_files(scheme_file, files):
             rec.write()
         except (TemplateNotFoundError, ResourceError) as exception:
             if isinstance(exception, TemplateNotFoundError):
-                print("{} has no injection marker lines.".format(file_))
+                print("{} has no valid injection marker lines.".format(file_))
+                sys.exit(1)
             elif isinstance(exception, ResourceError):
                 print('Necessary resource files for {} not found in working '
                       'directory.'.format(file_))
+                sys.exit(1)
