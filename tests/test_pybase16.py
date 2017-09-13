@@ -79,7 +79,7 @@ def test_build(clean_dir):
 def test_inject():
     """Test injection mode."""
     test_injection = 'TEST\nINJECT\nSTRING'
-    test_config = shared.rel_to_cwd(os.path.join('tests', 'text_config'))
+    test_config = shared.rel_to_cwd(os.path.join('tests', 'test_config'))
     rec = injector.Recipient(test_config)
     assert rec.temp == 'i3##colors-only'
     rec.inject_scheme(test_injection)
