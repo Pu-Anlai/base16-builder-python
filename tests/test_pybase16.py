@@ -1,9 +1,10 @@
-import updater
-import builder
-import shared
-import pytest
 import os
 import shutil
+import pytest
+import shared
+import updater
+import builder
+import injector
 
 
 @pytest.fixture(scope='module')
@@ -62,7 +63,6 @@ def test_ressource_dirs(clean_dir):
 
 def test_build(clean_dir):
     builder.build()
-    # TODO: real testing. check wether there's a file for every specified theme
     template_dirs = builder.get_template_dirs()
     templates = [builder.TemplateGroup(path) for path in template_dirs]
     for temp_group in templates:
@@ -74,3 +74,13 @@ def test_build(clean_dir):
             # assert these directories aren't empty. so at least something
             # happened
             assert len(os.listdir(output_dir)) > 0
+
+
+def test_inject():
+    """Test injection mode."""
+    test_injection = 'TEST\nINJECT\nSTRING'
+    test_config = shared.rel_to_cwd(os.path.join('tests', 'text_config'))
+    rec = injector.Recipient(test_config)
+    assert rec.temp == 'i3##colors-only'
+    rec.inject_scheme(test_injection)
+    rec.write()
