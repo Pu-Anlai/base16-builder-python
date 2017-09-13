@@ -92,6 +92,11 @@ def test_inject(clean_config):
     rec = injector.Recipient(clean_config)
     assert rec.temp == 'i3##colors-only'
 
+    # test colorscheme return
+    test_scheme_path = shared.rel_to_cwd('tests', 'test_scheme.yaml')
+    colorscheme = rec.get_colorscheme(test_scheme_path)
+    assert colorscheme
+
     # test injection
     rec.inject_scheme(test_injection)
     rec.write()

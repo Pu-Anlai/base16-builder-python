@@ -1,4 +1,7 @@
 import re
+import pystache
+from shared import rel_to_cwd, ResourceError, get_yaml_dict
+import builder
 
 TEMP_NEEDLE = re.compile(r'^.*%%base16_template:([^%]+)%%$')
 TEMP_END_NEEDLE = re.compile(r'^.*%%base16_template_end%%$')
@@ -40,6 +43,32 @@ class Recipient():
 
         raise TemplateNotFoundError
 
+    def get_colorscheme(self, scheme_file):
+        """Return a string object with the colorscheme that is to be
+        inserted."""
+        try:
+            scheme = get_yaml_dict(scheme_file)
+        except FileNotFoundError:
+            raise ResourceError
+        scheme = get_yaml_dict(scheme_file)
+        scheme_slug = builder.slugify(scheme_file)
+        builder.format_scheme(scheme, scheme_slug)
+
+        try:
+            temp_base, temp_sub = self.temp.split('##')
+        except ValueError:
+            temp_base, temp_sub = (self.temp.strip('##'), 'default')
+
+        try:
+            temp_path = rel_to_cwd('templates', temp_base)
+            temp_group = builder.TemplateGroup(temp_path)
+            single_temp = temp_group.templates[temp_sub]
+        except (FileNotFoundError, KeyError):
+            raise ResourceError
+
+        colorscheme = pystache.render(single_temp['parsed'], scheme)
+        return colorscheme
+
     def inject_scheme(self, b16_scheme):
         """Inject string $b16_scheme into self.content."""
         # correctly formatted start and end of block should have already been
@@ -67,3 +96,19 @@ class Recipient():
         """Write content back to file."""
         with open(self.path, 'w') as file_:
             file_.write(self.content)
+
+
+def inject_into_files(scheme_file, files):
+    """Inject $scheme_file into list $files."""
+    for file_ in files:
+        try:
+            rec = Recipient(file_)
+            colorscheme = rec.get_colorscheme(scheme_file)
+            rec.inject_scheme(colorscheme)
+            rec.write()
+        except (TemplateNotFoundError, ResourceError) as exception:
+            if isinstance(exception, TemplateNotFoundError):
+                print("{} has no injection marker lines.".format(file_))
+            elif isinstance(exception, ResourceError):
+                print('Necessary resource files for {} not found in working '
+                      'directory.'.format(file_))

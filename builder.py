@@ -6,10 +6,6 @@ import pystache
 from shared import get_yaml_dict, rel_to_cwd
 
 
-class ResourceError(Exception):
-    pass
-
-
 class TemplateGroup(object):
     """Representation of a template group, i.e. a group of templates specified
     in a config.yaml."""
@@ -100,8 +96,9 @@ def format_scheme(scheme, slug):
         scheme[f'{base}-dec-b'] = str(int(scheme[f'{base}-rgb-b']) / 255)
 
 
-def slugify(scheme_file_name):
+def slugify(scheme_file):
     """Format $scheme_file_name to be used as a slug variable."""
+    scheme_file_name = os.path.basename(scheme_file)
     if scheme_file_name.endswith('.yaml'):
         scheme_file_name = scheme_file_name[:-5]
     return scheme_file_name.lower().replace(' ', '-')
@@ -111,7 +108,7 @@ def build_single(scheme_file, templates):
     """Build colorscheme for a single $scheme_file using all TemplateGroup
     instances in $templates."""
     scheme = get_yaml_dict(scheme_file)
-    scheme_slug = slugify(os.path.basename(scheme_file))
+    scheme_slug = slugify(scheme_file)
     format_scheme(scheme, scheme_slug)
 
     scheme_name = scheme['scheme-name']

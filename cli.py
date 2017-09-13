@@ -2,6 +2,7 @@ import sys
 import argparse
 import updater
 import builder
+import injector
 from shared import rel_to_cwd
 
 
@@ -41,7 +42,16 @@ def build_mode(arg_namespace):
 
 def inject_mode(arg_namespace):
     """Check command line arguments and run build function."""
-    pass
+    if count_arguments(arg_namespace.template):
+        print('Build arguments ignored.')
+
+    if not arg_namespace.file or not arg_namespace.scheme:
+        print('A scheme file and at least one injection file need to be '
+              'provided.')
+        sys.exit(1)
+
+    injector.inject_into_files(arg_namespace.scheme,
+                               arg_namespace.file)
 
 
 USAGE_STRING = '%(prog)s {update|build|inject} -t [...] -s [...] -f [...]'
@@ -69,8 +79,7 @@ inject_group.add_argument('-f', '--file', action='append', help='''provide
                           paths to files into which you wish to inject a
                           colorscheme; can be specified more than once''')
 inject_group.add_argument('-s', '--scheme', help='''provide a path to the
-                          mustache file of the scheme which you wish to
-                          inject''')
+                          yaml scheme file which you wish to inject''')
 
 if __name__ == '__main__':
     arg_namespace = argparser.parse_args()
