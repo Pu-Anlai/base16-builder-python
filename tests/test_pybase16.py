@@ -21,6 +21,16 @@ def clean_dir():
                 os.remove(file_)
 
 
+@pytest.fixture(scope='function')
+def clean_config():
+    config = shared.rel_to_cwd(os.path.join('tests', 'test_config'))
+    with open(config, 'r') as file_:
+        orig_content = file_.read()
+    yield config
+    with open(config, 'w') as file_:
+        file_.write(orig_content)
+
+
 def test_update(clean_dir):
     updater.update()
 
@@ -76,11 +86,16 @@ def test_build(clean_dir):
             assert len(os.listdir(output_dir)) > 0
 
 
-def test_inject():
+def test_inject(clean_config):
     """Test injection mode."""
     test_injection = 'TEST\nINJECT\nSTRING'
-    test_config = shared.rel_to_cwd(os.path.join('tests', 'test_config'))
-    rec = injector.Recipient(test_config)
+    rec = injector.Recipient(clean_config)
     assert rec.temp == 'i3##colors-only'
+
+    # test injection
     rec.inject_scheme(test_injection)
     rec.write()
+    with open(clean_config) as file_:
+        content = file_.read()
+        matches = content.find(test_injection)
+        assert matches > 0
