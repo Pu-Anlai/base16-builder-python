@@ -1,8 +1,8 @@
 import sys
 import re
 import pystache
-from shared import rel_to_cwd, ResourceError, get_yaml_dict
-import builder
+from . import builder
+from .shared import rel_to_cwd, ResourceError, get_yaml_dict
 
 TEMP_NEEDLE = re.compile(r'^.*%%base16_template:([^%]+)%%$')
 TEMP_END_NEEDLE = re.compile(r'^.*%%base16_template_end%%$')

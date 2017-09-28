@@ -3,7 +3,7 @@ import glob
 from threading import Thread
 from queue import Queue
 import pystache
-from shared import get_yaml_dict, rel_to_cwd, ResourceError
+from .shared import get_yaml_dict, rel_to_cwd, ResourceError
 
 
 class TemplateGroup(object):

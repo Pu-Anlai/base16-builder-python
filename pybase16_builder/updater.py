@@ -4,7 +4,7 @@ import subprocess
 import shutil
 from threading import Thread
 from queue import Queue
-from shared import get_yaml_dict, rel_to_cwd
+from .shared import get_yaml_dict, rel_to_cwd
 
 
 def write_sources_file():

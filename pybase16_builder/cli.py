@@ -1,9 +1,7 @@
 import sys
 import argparse
-import updater
-import builder
-import injector
-from shared import rel_to_cwd
+from . import updater, builder, injector
+from .shared import rel_to_cwd
 
 
 def count_arguments(*args):
