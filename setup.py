@@ -17,5 +17,12 @@ setup(
                    'Programming Language :: Python :: 3.6',
                    'Programming Language :: Python :: 3 :: Only'
                   ],
-      keywords='base16'
+      keywords='base16',
+      install_requires=['pystache', 'yaml'],
+      python_requires='>=3.6',
+      entry_points={
+                    'console_scripts': [
+                        'pybase16 = cli:run'
+                                       ]
+                   }
      )

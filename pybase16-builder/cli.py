@@ -54,6 +54,17 @@ def inject_mode(arg_namespace):
                                arg_namespace.file)
 
 
+def run():
+    arg_namespace = argparser.parse_args()
+
+    if arg_namespace.operation == 'update':
+        update_mode(arg_namespace)
+    elif arg_namespace.operation == 'build':
+        build_mode(arg_namespace)
+    elif arg_namespace.operation == 'inject':
+        inject_mode(arg_namespace)
+
+
 USAGE_STRING = '%(prog)s {update|build|inject} -t [...] -s [...] -f [...]'
 DESC_STRING = '''
   update:   download all base16 scheme and template repositories
@@ -82,11 +93,4 @@ inject_group.add_argument('-s', '--scheme', help='''provide a path to the
                           yaml scheme file which you wish to inject''')
 
 if __name__ == '__main__':
-    arg_namespace = argparser.parse_args()
-
-    if arg_namespace.operation == 'update':
-        update_mode(arg_namespace)
-    elif arg_namespace.operation == 'build':
-        build_mode(arg_namespace)
-    elif arg_namespace.operation == 'inject':
-        inject_mode(arg_namespace)
+    run()
