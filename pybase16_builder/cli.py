@@ -17,9 +17,12 @@ def update_mode(arg_namespace):
                        arg_namespace.scheme,
                        arg_namespace.template):
         print("Update operation doesn't allow for any arguments. Ignored.")
-        sys.exit(1)
     else:
-        updater.update()
+        try:
+            updater.update()
+        except PermissionError:
+            print("No write permission for current working directory.")
+            sys.exit(1)
 
 
 def build_mode(arg_namespace):
@@ -32,9 +35,13 @@ def build_mode(arg_namespace):
 
     try:
         builder.build(templates=temp_paths)
-    except builder.ResourceError:
-        print('Necessary resources for building not found in current '
-              'working directory.')
+    except (builder.ResourceError, PermissionError) as exception:
+        if isinstance(exception, builder.ResourceError):
+            print('Necessary resources for building not found in current '
+                  'working directory.')
+        if isinstance(exception, PermissionError):
+            print("No write permission for current working directory.")
+
         sys.exit(1)
 
 

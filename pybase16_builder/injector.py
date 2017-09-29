@@ -47,10 +47,7 @@ class Recipient():
     def get_colorscheme(self, scheme_file):
         """Return a string object with the colorscheme that is to be
         inserted."""
-        try:
-            scheme = get_yaml_dict(scheme_file)
-        except FileNotFoundError:
-            raise ResourceError
+        scheme = get_yaml_dict(scheme_file)
         scheme = get_yaml_dict(scheme_file)
         scheme_slug = builder.slugify(scheme_file)
         builder.format_scheme(scheme, scheme_slug)
@@ -107,11 +104,20 @@ def inject_into_files(scheme_file, files):
             colorscheme = rec.get_colorscheme(scheme_file)
             rec.inject_scheme(colorscheme)
             rec.write()
-        except (TemplateNotFoundError, ResourceError) as exception:
+        except (TemplateNotFoundError,
+                ResourceError,
+                PermissionError,
+                FileNotFoundError) as exception:
+
+            # turn exceptions into error messages
             if isinstance(exception, TemplateNotFoundError):
                 print("{} has no valid injection marker lines.".format(file_))
-                sys.exit(1)
             elif isinstance(exception, ResourceError):
                 print('Necessary resource files for {} not found in working '
                       'directory.'.format(file_))
-                sys.exit(1)
+            elif isinstance(exception, PermissionError):
+                print("No write permission for current working directory.")
+            else:
+                print("File {} not found.".format(exception.filename))
+
+            sys.exit(1)
