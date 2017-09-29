@@ -22,7 +22,7 @@ setup(
       python_requires='>=3.6',
       entry_points={
                     'console_scripts': [
-                        'pybase16 = cli:run'
+                        'pybase16 = pybase16_builder.cli:run'
                                        ]
                    }
      )

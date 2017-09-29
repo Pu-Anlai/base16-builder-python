@@ -1,10 +1,7 @@
 import os
 import shutil
 import pytest
-import shared
-import updater
-import builder
-import injector
+from pybase16_builder import shared, updater, builder, injector
 
 
 @pytest.fixture(scope='module')
