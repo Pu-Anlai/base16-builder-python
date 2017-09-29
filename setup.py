@@ -4,7 +4,7 @@ setup(
       name='pybase16-builder',
       version='0.1',
       description='A base16 colorscheme builder for Python',
-      long_description=open('README.md').read(),
+      long_description=open('README.rst').read(),
       url='https://github.com/InspectorMustache/pybase16-builder',
       packages=['pybase16_builder'],
       author='Pu Anlai',
