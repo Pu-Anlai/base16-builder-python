@@ -3,10 +3,10 @@ from setuptools import setup
 setup(
       name='pybase16-builder',
       version='0.1',
-      description='A base16 colorscheme buider for Python',
+      description='A base16 colorscheme builder for Python',
       long_description=open('README.md').read(),
       url='https://github.com/InspectorMustache/pybase16-builder',
-      packages=['pybase16-builder'],
+      packages=['pybase16_builder'],
       author='Pu Anlai',
       license='MIT',
       classifiers=[
@@ -18,7 +18,7 @@ setup(
                    'Programming Language :: Python :: 3 :: Only'
                   ],
       keywords='base16',
-      install_requires=['pystache', 'yaml'],
+      install_requires=['pystache', 'pyyaml'],
       python_requires='>=3.6',
       entry_points={
                     'console_scripts': [

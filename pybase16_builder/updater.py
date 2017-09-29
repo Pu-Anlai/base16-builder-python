@@ -39,14 +39,22 @@ def git_clone(git_url, path):
 
     os.makedirs(path, exist_ok=True)
     print('Start cloning from {}…'.format(git_url))
-    git_proc = subprocess.run(['git', 'clone', git_url, path],
-                              stderr=subprocess.PIPE)
+    git_proc = subprocess.Popen(['git', 'clone', git_url, path],
+                                stderr=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                env={'GIT_TERMINAL_PROMPT': '0'})
+
+    try:
+        stdoutmsg, stderrmsg = git_proc.communicate(timeout=120)
+    except subprocess.TimeoutExpired:
+        git_proc.kill()
+        stderrmsg = b'Timed out.'
+
     if git_proc.returncode == 0:
         print('Cloned {}.'.format(git_url))
     else:
-        errmsg = git_proc.stderr.decode('utf-8')
         print('Error cloning from {}:\n{}'.format(git_url,
-                                                  errmsg))
+                                                  stderrmsg.decode('utf-8')))
 
 
 def git_clone_worker(queue):
@@ -67,10 +75,10 @@ def git_clone_job_list(job_list):
     for job in job_list:
         queue.put(job)
 
-    if len(job_list) < 40:
+    if len(job_list) < 20:
         thread_num = len(job_list)
     else:
-        thread_num = 40
+        thread_num = 20
 
     threads = []
     for _ in range(thread_num):
