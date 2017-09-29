@@ -13,7 +13,8 @@ If you don't want to clutter your computer with something that you're probably j
 
 Usage
 -----
-There are three modes of operations::
+There are three modes of operations:
+::
     pybase16 update
     pybase16 build
     pybase16 inject
@@ -36,9 +37,9 @@ This operation provides an easier way to quickly insert a specific colorscheme i
 
     # %%base16_template_end%%
 
-Both lines can feature arbitrary characters before the two percentage signs. This is done to accomodate different comment styles. Both lines need to end exactly as demonstrated above, however. Replace TEMPLATE_NAME with the name of the template you wish to insert (for example "gnome-terminal"). Again, this must correspond to a folder in the templates directory. Replace SUBTEMPLATE_NAME with the name of the subtemplate as it is defined at the top level of the template's config.yaml file (see `here <https://github.com/chriskempson/base16/blob/master/file.md>_` for details). If you omit the subtemplate name (don't omit ## though), "default" is assumed.
+Both lines can feature arbitrary characters before the two percentage signs. This is done to accomodate different comment styles. Both lines need to end exactly as demonstrated above, however. Replace TEMPLATE_NAME with the name of the template you wish to insert (for example "gnome-terminal"). Again, this must correspond to a folder in the templates directory. Replace SUBTEMPLATE_NAME with the name of the subtemplate as it is defined at the top level of the template's config.yaml file (see `here <https://github.com/chriskempson/base16/blob/master/file.md>`_ for details). If you omit the subtemplate name (don't omit "##" though), "default" is assumed.
 
-An example of an i3 config file prepared in such a way (and used for testing purposes) can be found `here <https://github.com/InspectorMustache/pybase16-builder/blob/master/tests/test_config>_`.
+An example of an i3 config file prepared in such a way (and used for testing purposes) can be found `here <https://github.com/InspectorMustache/pybase16-builder/blob/master/tests/test_config>`_.
 
 Provide a path to the colorscheme you wish to inject by pointing to its YAML file with the -s option. Use the -f option for each file into which you want to inject the scheme.
 
