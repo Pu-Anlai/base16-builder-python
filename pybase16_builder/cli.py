@@ -1,5 +1,6 @@
 import sys
 import argparse
+from copy import copy
 from . import updater, builder, injector
 from .shared import rel_to_cwd
 
@@ -15,7 +16,8 @@ def update_mode(arg_namespace):
     """Check command line arguments and run update function."""
     if count_arguments(arg_namespace.file,
                        arg_namespace.scheme,
-                       arg_namespace.template):
+                       arg_namespace.template,
+                       arg_namespace.output):
         print("Update operation doesn't allow for any arguments. Ignored.")
     else:
         try:
@@ -27,27 +29,29 @@ def update_mode(arg_namespace):
 
 def build_mode(arg_namespace):
     """Check command line arguments and run build function."""
-    if count_arguments(arg_namespace.file, arg_namespace.scheme):
+    if count_arguments(arg_namespace.file):
         print('Inject arguments ignored.')
 
     custom_temps = arg_namespace.template or []
     temp_paths = [rel_to_cwd('templates', temp) for temp in custom_temps]
 
     try:
-        builder.build(templates=temp_paths)
+        builder.build(templates=temp_paths,
+                      schemes=arg_namespace.scheme,
+                      base_output_dir=arg_namespace.output)
     except (builder.ResourceError, PermissionError) as exception:
         if isinstance(exception, builder.ResourceError):
             print('Necessary resources for building not found in current '
                   'working directory.')
         if isinstance(exception, PermissionError):
-            print("No write permission for current working directory.")
+            print("No write permission for output directory.")
 
         sys.exit(1)
 
 
 def inject_mode(arg_namespace):
     """Check command line arguments and run build function."""
-    if count_arguments(arg_namespace.template):
+    if count_arguments(arg_namespace.template, arg_namespace.output):
         print('Build arguments ignored.')
 
     if not arg_namespace.file or not arg_namespace.scheme:
@@ -86,16 +90,23 @@ inject_group = argparser.add_argument_group('inject arguments')
 argparser.add_argument('operation', choices=['update', 'build', 'inject'],
                        metavar='type of operation', help=argparse.SUPPRESS)
 
+build_group.add_argument('-o', '--output', help='''specify a target directory
+                         for the build output''')
 build_group.add_argument('-t', '--template', action='append', metavar='TEMP',
                          help='''restrict operation to one or several templates
                          (must correspond to a directory in ./templates); can
                          be specified more than once''')
+# use a different help text for scheme option depending on operational mode
+s_option = build_group.add_argument('-s', '--scheme', action='append',
+                                    help='''restrict operation to one or
+                                    several schemes (must correspond
+                                    to a yaml file in ./schemes/*/); can be
+                                    specified more than once''')
 
 inject_group.add_argument('-f', '--file', action='append', help='''provide
                           paths to files into which you wish to inject a
                           colorscheme; can be specified more than once''')
-inject_group.add_argument('-s', '--scheme', help='''provide a path to the
-                          yaml scheme file which you wish to inject''')
-
-if __name__ == '__main__':
-    run()
+s2_option = copy(s_option)
+s2_option.help = '''provide a path to the yaml scheme file which you wish to
+                    inject'''
+inject_group._group_actions.append(s2_option)

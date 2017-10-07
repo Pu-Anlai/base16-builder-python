@@ -1,5 +1,5 @@
 import os
-import glob
+from glob import glob
 from threading import Thread
 from queue import Queue
 import pystache
@@ -18,7 +18,7 @@ class TemplateGroup(object):
     def get_templates(self):
         """
         Return a list of template_dicts based on the config.yaml in
-        $self.base_path.  Keys correspond to templates and values represent
+        $self.base_path. Keys correspond to templates and values represent
         further settings regarding each template. A pystache object containing
         the parsed corresponding mustache file is added to the sub-dictionary.
         """
@@ -56,7 +56,7 @@ def get_pystache_parsed(mustache_file):
 def get_template_dirs():
     """Return a set of all template directories."""
     temp_glob = rel_to_cwd('templates', '**', 'templates', 'config.yaml')
-    temp_groups = glob.glob(temp_glob)
+    temp_groups = glob(temp_glob)
     temp_groups = [get_parent_dir(path, 2) for path in temp_groups]
     return set(temp_groups)
 
@@ -64,15 +64,21 @@ def get_template_dirs():
 def get_scheme_dirs():
     """Return a set of all scheme directories."""
     scheme_glob = rel_to_cwd('schemes', '**', '*.yaml')
-    scheme_groups = glob.glob(scheme_glob)
+    scheme_groups = glob(scheme_glob)
     scheme_groups = [get_parent_dir(path) for path in scheme_groups]
     return set(scheme_groups)
 
 
-def get_scheme_files(path):
-    """Return a list of all yaml (scheme) files in $path."""
-    scheme_glob = os.path.join(path, '*.yaml')
-    return glob.glob(scheme_glob)
+def get_scheme_files(pattern=None):
+    """Return a list of all (or those matching $pattern) yaml (scheme)
+    files."""
+    pattern = '{}.yaml'.format(pattern or '*')
+    scheme_files = []
+    for scheme_path in get_scheme_dirs():
+        file_paths = glob(os.path.join(scheme_path, pattern))
+        scheme_files.extend(file_paths)
+
+    return scheme_files
 
 
 def format_scheme(scheme, slug):
@@ -104,7 +110,7 @@ def slugify(scheme_file):
     return scheme_file_name.lower().replace(' ', '-')
 
 
-def build_single(scheme_file, templates):
+def build_single(scheme_file, templates, base_output_dir):
     """Build colorscheme for a single $scheme_file using all TemplateGroup
     instances in $templates."""
     scheme = get_yaml_dict(scheme_file)
@@ -116,8 +122,9 @@ def build_single(scheme_file, templates):
     for temp_group in templates:
 
         for _, sub in temp_group.templates.items():
-            output_dir = rel_to_cwd('output', temp_group.name,
-                                    sub['output'])
+            output_dir = os.path.join(base_output_dir,
+                                      temp_group.name,
+                                      sub['output'])
             try:
                 os.makedirs(output_dir)
             except FileExistsError:
@@ -132,18 +139,18 @@ def build_single(scheme_file, templates):
     print('Built colorschemes for scheme "{}".'.format(scheme_name))
 
 
-def build_single_worker(queue, templates):
+def build_single_worker(queue, templates, base_output_dir):
     """Worker thread for picking up scheme files from $queue and building b16
     templates using $templates until it receives None."""
     while True:
         scheme_file = queue.get()
         if scheme_file is None:
             break
-        build_single(scheme_file, templates)
+        build_single(scheme_file, templates, base_output_dir)
         queue.task_done()
 
 
-def build_from_job_list(scheme_files, templates):
+def build_from_job_list(scheme_files, templates, base_output_dir):
     """Use $scheme_files as a job lists and build base16 templates using
     $templates (a list of TemplateGroup objects)."""
     queue = Queue()
@@ -157,7 +164,8 @@ def build_from_job_list(scheme_files, templates):
 
     threads = []
     for _ in range(thread_num):
-        thread = Thread(target=build_single_worker, args=(queue, templates))
+        thread = Thread(target=build_single_worker,
+                        args=(queue, templates, base_output_dir))
         thread.start()
         threads.append(thread)
 
@@ -170,19 +178,26 @@ def build_from_job_list(scheme_files, templates):
         thread.join()
 
 
-def build(templates=None):
-    scheme_dirs = get_scheme_dirs()
+def build(templates=None, schemes=None, base_output_dir=None):
+    """Main build function to initiate building process."""
     template_dirs = templates or get_template_dirs()
-
     templates = [TemplateGroup(path) for path in template_dirs]
-    scheme_files = []
-    for scheme_path in scheme_dirs:
-        scheme_files.extend(get_scheme_files(scheme_path))
+    scheme_files = get_scheme_files(schemes)
+    base_output_dir = base_output_dir or rel_to_cwd('output')
+
+    # raise PermissionError if user has no write acces for $base_output_dir
+    try:
+        os.makedirs(base_output_dir)
+    except FileExistsError:
+        pass
+
+    if not os.access(base_output_dir, os.W_OK):
+        raise PermissionError
 
     # raise ResourceError if there is not at least one template or scheme
     # to work with
     if not templates or not scheme_files:
         raise ResourceError
 
-    build_from_job_list(scheme_files, templates)
+    build_from_job_list(scheme_files, templates, base_output_dir)
     print('Finished building process.')

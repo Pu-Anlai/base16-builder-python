@@ -1,5 +1,6 @@
 import os
 import shutil
+import tempfile
 import pytest
 from pybase16_builder import shared, updater, builder, injector
 
@@ -61,9 +62,7 @@ def test_ressource_dirs(clean_dir):
         assert len(yaml_glob) >= 1
 
     # assert get_scheme_files only returns yaml_files
-    scheme_files = []
-    for scheme_path in builder.get_scheme_dirs():
-        scheme_files.extend(builder.get_scheme_files(scheme_path))
+    scheme_files = builder.get_scheme_files()
     for scheme_file in scheme_files:
         assert scheme_file[-5:] == '.yaml'
 
@@ -81,6 +80,25 @@ def test_build(clean_dir):
             # assert these directories aren't empty. so at least something
             # happened
             assert len(os.listdir(output_dir)) > 0
+
+
+def test_custom_build(clean_dir):
+    """Test building with specific parameters."""
+    dunst_temp_path = shared.rel_to_cwd('templates', 'dunst')
+    base_output_dir = tempfile.mktemp()
+    builder.build(templates=[dunst_temp_path], schemes='atelier-heath-light',
+                  base_output_dir=base_output_dir)
+
+    dunst_temps = builder.TemplateGroup(dunst_temp_path).get_templates()
+    # out_dirs = [dunst_temps[temp]['output'] for temp in dunst_temps.keys()]
+    for temp, sub in dunst_temps.items():
+        out_path = os.path.join(base_output_dir, 'dunst',
+                                sub['output'])
+        theme_file = 'base16-atelier-heath-light{}'.format(sub['extension'])
+        out_file = os.path.join(out_path, theme_file)
+
+        assert os.path.exists(out_file)
+        assert len(os.listdir(out_path)) == 1
 
 
 def test_inject(clean_config):
