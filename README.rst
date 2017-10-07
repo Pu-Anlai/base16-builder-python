@@ -29,7 +29,7 @@ Build
 Builds base16 colorschemes for all schemes and templates. This requires the directory structure and files created by the update operation to be present in the working directory. This operation accepts three parameters:
 
 * :code:`-s/--scheme` restricts building to specific schemes
-  Can be specified more than once. Each argument must correspond to a scheme file.
+  Can be specified more than once. Each argument must correspond to a scheme file (sans extension).
 * :code:`-t/--template` restricts building to specific templates
   Can be specified more than once. Each argument must correspond to a folder name in the templates directory.
 * :code:`-o/--output` specifies a path where built colorschemes will be placed.
