@@ -86,7 +86,7 @@ def test_custom_build(clean_dir):
     """Test building with specific parameters."""
     dunst_temp_path = shared.rel_to_cwd('templates', 'dunst')
     base_output_dir = tempfile.mktemp()
-    builder.build(templates=[dunst_temp_path], schemes='atelier-heath-light',
+    builder.build(templates=[dunst_temp_path], schemes=['atelier-heath-light'],
                   base_output_dir=base_output_dir)
 
     dunst_temps = builder.TemplateGroup(dunst_temp_path).get_templates()

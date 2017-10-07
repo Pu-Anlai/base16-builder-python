@@ -69,14 +69,16 @@ def get_scheme_dirs():
     return set(scheme_groups)
 
 
-def get_scheme_files(pattern=None):
+def get_scheme_files(patterns=None):
     """Return a list of all (or those matching $pattern) yaml (scheme)
     files."""
-    pattern = '{}.yaml'.format(pattern or '*')
+    patterns = patterns or ['*']
+    pattern_list = ['{}.yaml'.format(pattern) for pattern in patterns]
     scheme_files = []
     for scheme_path in get_scheme_dirs():
-        file_paths = glob(os.path.join(scheme_path, pattern))
-        scheme_files.extend(file_paths)
+        for pattern in pattern_list:
+            file_paths = glob(os.path.join(scheme_path, pattern))
+            scheme_files.extend(file_paths)
 
     return scheme_files
 
@@ -181,9 +183,13 @@ def build_from_job_list(scheme_files, templates, base_output_dir):
 def build(templates=None, schemes=None, base_output_dir=None):
     """Main build function to initiate building process."""
     template_dirs = templates or get_template_dirs()
-    templates = [TemplateGroup(path) for path in template_dirs]
     scheme_files = get_scheme_files(schemes)
     base_output_dir = base_output_dir or rel_to_cwd('output')
+
+    # raise ResourceError if there is not at least one template or scheme
+    # to work with
+    if not template_dirs or not scheme_files:
+        raise ResourceError
 
     # raise PermissionError if user has no write acces for $base_output_dir
     try:
@@ -194,10 +200,7 @@ def build(templates=None, schemes=None, base_output_dir=None):
     if not os.access(base_output_dir, os.W_OK):
         raise PermissionError
 
-    # raise ResourceError if there is not at least one template or scheme
-    # to work with
-    if not templates or not scheme_files:
-        raise ResourceError
+    templates = [TemplateGroup(path) for path in template_dirs]
 
     build_from_job_list(scheme_files, templates, base_output_dir)
     print('Finished building process.')
