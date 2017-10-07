@@ -9,7 +9,7 @@ You need at least Python 3.6 because I like f-strings.
 ::
     pip install pybase16-builder
 
-If you don't want to clutter your computer with something that you're probably just going to use once you can also just clone this repository and use the provided pybase16.py file.
+If you don't want to clutter your computer with something that you're just going to use once you can also just clone this repository and use the provided pybase16.py file.
 
 Usage
 -----
@@ -22,11 +22,22 @@ There are three modes of operation:
 Update
 ^^^^^^
 Downloads all base16 schemes and templates to the current working directory.
+The source files, i.e. the files pointing to the scheme and template repositories (see `here <https://github.com/chriskempson/base16/blob/master/builder.md>`_) will by default also be updated. If you want to use your own versions of these files (to exclude specific repositories, for example), you can prevent the builder from updating the source files by using the :code:`-c/--custom` option.
 
 Build
 ^^^^^
-Builds base16 colorschemes for all schemes and templates. This requires the directory structure and files created by the update operation.
-The created colorschemes are put into a folder named "output" in the current working directory. You can limit building to certain templates with the -t option (cf. :code:`pybase16 -h`) if you really need those colorschemes and can't wait an additional 3 seconds or so. The parameters that are specified with -t must correspond to a folder in the templates directory (which is created by the update operation).
+Builds base16 colorschemes for all schemes and templates. This requires the directory structure and files created by the update operation to be present in the working directory. This operation accepts three parameters:
+
+* :code:`-s/--scheme` restricts building to specific schemes
+  Can be specified more than once. Each argument must correspond to a scheme file.
+* :code:`-t/--template` restricts building to specific templates
+  Can be specified more than once. Each argument must correspond to a folder name in the templates directory.
+* :code:`-o/--output` specifies a path where built colorschemes will be placed.
+  If this option is not specified, an "output" folder in the current working directory will be created and used.
+
+Example:
+::
+    pybase16 build -t dunst -s atelier-heath-light -o /tmp/output
 
 Inject
 ^^^^^^
