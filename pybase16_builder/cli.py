@@ -21,16 +21,21 @@ def update_mode(arg_namespace):
         print("Update operation doesn't allow for any arguments. Ignored.")
     else:
         try:
-            updater.update()
-        except PermissionError:
-            print("No write permission for current working directory.")
+            updater.update(custom_sources=arg_namespace.custom)
+        except (PermissionError, FileNotFoundError) as exception:
+            if isinstance(exception, PermissionError):
+                print("No write permission for current working directory.")
+            if isinstance(exception, FileNotFoundError):
+                print('Necessary resources for updating not found in current '
+                      'working directory.')
+
             sys.exit(1)
 
 
 def build_mode(arg_namespace):
     """Check command line arguments and run build function."""
-    if count_arguments(arg_namespace.file):
-        print('Inject arguments ignored.')
+    if count_arguments(arg_namespace.file, arg_namespace.custom):
+        print('Non-build arguments ignored.')
 
     custom_temps = arg_namespace.template or []
     temp_paths = [rel_to_cwd('templates', temp) for temp in custom_temps]
@@ -51,8 +56,10 @@ def build_mode(arg_namespace):
 
 def inject_mode(arg_namespace):
     """Check command line arguments and run build function."""
-    if count_arguments(arg_namespace.template, arg_namespace.output):
-        print('Build arguments ignored.')
+    if count_arguments(arg_namespace.template,
+                       arg_namespace.output,
+                       arg_namespace.custom):
+        print('Non-inject arguments ignored.')
 
     if not arg_namespace.file or not arg_namespace.scheme:
         print('A scheme file and at least one injection file need to be '
@@ -85,10 +92,14 @@ desc_formatter = argparse.RawDescriptionHelpFormatter
 argparser = argparse.ArgumentParser(usage=USAGE_STRING,
                                     description=DESC_STRING,
                                     formatter_class=desc_formatter)
+update_group = argparser.add_argument_group('update arguments')
 build_group = argparser.add_argument_group('build arguments')
 inject_group = argparser.add_argument_group('inject arguments')
 argparser.add_argument('operation', choices=['update', 'build', 'inject'],
                        metavar='type of operation', help=argparse.SUPPRESS)
+
+update_group.add_argument('-c', '--custom', action='store_true', help="""update
+                          repositories but don't update source files""")
 
 build_group.add_argument('-o', '--output', help='''specify a target directory
                          for the build output''')

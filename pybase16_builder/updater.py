@@ -95,18 +95,19 @@ def git_clone_job_list(job_list):
         thread.join()
 
 
-def update():
+def update(custom_sources=True):
     """Update function to be called from cli.py"""
     if not shutil.which('git'):
         print('Git executable not found in $PATH.')
         sys.exit(1)
 
-    print('Creating sources.yaml…')
-    write_sources_file()
-    print('Cloning sources…')
-    sources_file = rel_to_cwd('sources.yaml')
-    jobs = yaml_to_job_list(sources_file, rel_to_cwd('sources'))
-    git_clone_job_list(jobs)
+    if not custom_sources:
+        print('Creating sources.yaml…')
+        write_sources_file()
+        print('Cloning sources…')
+        sources_file = rel_to_cwd('sources.yaml')
+        jobs = yaml_to_job_list(sources_file, rel_to_cwd('sources'))
+        git_clone_job_list(jobs)
 
     print('Cloning templates…')
     jobs = yaml_to_job_list(rel_to_cwd('sources', 'templates', 'list.yaml'),
