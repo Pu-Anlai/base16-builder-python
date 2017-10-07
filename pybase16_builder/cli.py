@@ -98,8 +98,9 @@ inject_group = argparser.add_argument_group('inject arguments')
 argparser.add_argument('operation', choices=['update', 'build', 'inject'],
                        metavar='type of operation', help=argparse.SUPPRESS)
 
-update_group.add_argument('-c', '--custom', action='store_true', help="""update
-                          repositories but don't update source files""")
+update_group.add_argument('-c', '--custom', action='store_const', const=True,
+                          help="""update repositories but don't update source
+                          files""")
 
 build_group.add_argument('-o', '--output', help='''specify a target directory
                          for the build output''')

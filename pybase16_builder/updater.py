@@ -95,7 +95,7 @@ def git_clone_job_list(job_list):
         thread.join()
 
 
-def update(custom_sources=True):
+def update(custom_sources=False):
     """Update function to be called from cli.py"""
     if not shutil.which('git'):
         print('Git executable not found in $PATH.')
