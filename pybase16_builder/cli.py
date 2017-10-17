@@ -66,7 +66,9 @@ def inject_mode(arg_namespace):
               'provided.')
         sys.exit(1)
 
-    injector.inject_into_files(arg_namespace.scheme,
+    # override multiple arguments here ([-1]) because we copied the scheme
+    # option from the build operation
+    injector.inject_into_files(arg_namespace.scheme[-1],
                                arg_namespace.file)
 
 

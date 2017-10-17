@@ -48,7 +48,6 @@ class Recipient():
         """Return a string object with the colorscheme that is to be
         inserted."""
         scheme = get_yaml_dict(scheme_file)
-        scheme = get_yaml_dict(scheme_file)
         scheme_slug = builder.slugify(scheme_file)
         builder.format_scheme(scheme, scheme_slug)
 
