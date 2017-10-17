@@ -98,6 +98,7 @@ class Recipient():
 def inject_into_files(scheme_file, files):
     """Inject $scheme_file into list $files."""
     for file_ in files:
+        exit_code = 0
         try:
             rec = Recipient(file_)
             colorscheme = rec.get_colorscheme(scheme_file)
@@ -107,6 +108,7 @@ def inject_into_files(scheme_file, files):
                 ResourceError,
                 PermissionError,
                 FileNotFoundError) as exception:
+            exit_code += 1
 
             # turn exceptions into error messages
             if isinstance(exception, TemplateNotFoundError):
@@ -119,4 +121,4 @@ def inject_into_files(scheme_file, files):
             else:
                 print("File {} not found.".format(exception.filename))
 
-            sys.exit(1)
+    sys.exit(exit_code)
