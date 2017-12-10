@@ -5,6 +5,11 @@ from . import updater, builder, injector
 from .shared import rel_to_cwd
 
 
+BUILD_MODE_ID = 0
+INJECT_MODE_ID = 1
+UPDATE_MODE_ID = 2
+
+
 def count_arguments(*args):
     """Takes in argument attributes from an argparse Namespace object and
     counts how many of them are not None."""
@@ -12,24 +17,39 @@ def count_arguments(*args):
     return arg_count
 
 
-def update_mode(arg_namespace):
-    """Check command line arguments and run update function."""
-    if count_arguments(arg_namespace.file,
-                       arg_namespace.scheme,
-                       arg_namespace.template,
-                       arg_namespace.output):
-        print("Update operation doesn't allow for any arguments. Ignored.")
-    else:
-        try:
-            updater.update(custom_sources=arg_namespace.custom)
-        except (PermissionError, FileNotFoundError) as exception:
-            if isinstance(exception, PermissionError):
-                print("No write permission for current working directory.")
-            if isinstance(exception, FileNotFoundError):
-                print('Necessary resources for updating not found in current '
-                      'working directory.')
+def handle_exit_exception(mode, exception):
+    """Print an appropriate error message for $mode and $exception and exit the
+    program."""
+    if mode == BUILD_MODE_ID:
+        if isinstance(exception, LookupError):
+            print('Necessary resources for building not found in current '
+                  'working directory.')
+        if isinstance(exception, PermissionError):
+            print("No write permission for output directory.")
 
-            sys.exit(1)
+    elif mode == INJECT_MODE_ID:
+        if isinstance(exception, IndexError):
+            print('"{}" has no valid injection marker lines.'.format(
+                exception.args[0]))
+        if isinstance(exception, FileNotFoundError):
+            print('Lacking resource "{}" to complete operation.'.format(
+                exception.filename))
+        if isinstance(exception, PermissionError):
+            print('No write permission for current working directory.')
+        if isinstance(exception, IsADirectoryError):
+            print('"{}" is a directory. Provide a *.yaml scheme file instead.'
+                  .format(exception.filename))
+
+    elif mode == UPDATE_MODE_ID:
+        if isinstance(exception, PermissionError):
+            print('No write permission for current working directory.')
+        if isinstance(exception, FileNotFoundError):
+            print('Necessary resources for updating not found in current '
+                  'working directory.')
+    else:
+        raise exception
+
+    sys.exit(1)
 
 
 def build_mode(arg_namespace):
@@ -45,13 +65,7 @@ def build_mode(arg_namespace):
                       schemes=arg_namespace.scheme,
                       base_output_dir=arg_namespace.output)
     except (builder.ResourceError, PermissionError) as exception:
-        if isinstance(exception, builder.ResourceError):
-            print('Necessary resources for building not found in current '
-                  'working directory.')
-        if isinstance(exception, PermissionError):
-            print("No write permission for output directory.")
-
-        sys.exit(1)
+        handle_exit_exception(BUILD_MODE_ID, exception)
 
 
 def inject_mode(arg_namespace):
@@ -68,8 +82,26 @@ def inject_mode(arg_namespace):
 
     # override multiple arguments here ([-1]) because we copied the scheme
     # option from the build operation
-    injector.inject_into_files(arg_namespace.scheme[-1],
-                               arg_namespace.file)
+    try:
+        injector.inject_into_files(arg_namespace.scheme[-1],
+                                   arg_namespace.file)
+    except (IndexError, FileNotFoundError,
+            PermissionError, IsADirectoryError) as exception:
+        handle_exit_exception(INJECT_MODE_ID, exception)
+
+
+def update_mode(arg_namespace):
+    """Check command line arguments and run update function."""
+    if count_arguments(arg_namespace.file,
+                       arg_namespace.scheme,
+                       arg_namespace.template,
+                       arg_namespace.output):
+        print("Update operation doesn't allow for any arguments. Ignored.")
+    else:
+        try:
+            updater.update(custom_sources=arg_namespace.custom)
+        except (PermissionError, FileNotFoundError) as exception:
+            handle_exit_exception(UPDATE_MODE_ID, exception)
 
 
 def run():

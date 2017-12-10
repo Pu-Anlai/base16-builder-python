@@ -4,10 +4,6 @@ import yaml
 CWD = os.path.realpath(os.getcwd())
 
 
-class ResourceError(Exception):
-    pass
-
-
 def rel_to_cwd(*args):
     """Get absolute real path of $path with $CWD as base."""
     return os.path.join(CWD, *args)

@@ -3,7 +3,7 @@ from glob import glob
 from threading import Thread
 from queue import Queue
 import pystache
-from .shared import get_yaml_dict, rel_to_cwd, ResourceError
+from .shared import get_yaml_dict, rel_to_cwd
 
 
 class TemplateGroup(object):
@@ -189,7 +189,7 @@ def build(templates=None, schemes=None, base_output_dir=None):
     # raise ResourceError if there is not at least one template or scheme
     # to work with
     if not template_dirs or not scheme_files:
-        raise ResourceError
+        raise LookupError
 
     # raise PermissionError if user has no write acces for $base_output_dir
     try:
