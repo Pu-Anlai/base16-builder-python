@@ -186,7 +186,7 @@ def build(templates=None, schemes=None, base_output_dir=None):
     scheme_files = get_scheme_files(schemes)
     base_output_dir = base_output_dir or rel_to_cwd('output')
 
-    # raise ResourceError if there is not at least one template or scheme
+    # raise LookupError if there is not at least one template or scheme
     # to work with
     if not template_dirs or not scheme_files:
         raise LookupError

@@ -22,17 +22,20 @@ There are three modes of operation:
 Update
 ^^^^^^
 Downloads all base16 schemes and templates to the current working directory.
-The source files, i.e. the files pointing to the scheme and template repositories (see `here <https://github.com/chriskempson/base16/blob/master/builder.md>`_) will by default also be updated. If you want to use your own versions of these files (to exclude specific repositories, for example), you can prevent the builder from updating the source files by using the :code:`-c/--custom` option.
+The source files, i.e. the files pointing to the scheme and template repositories (see `here <https://github.com/chriskempson/base16/blob/master/builder.md>`_) will also be updated by default. If you want to use your own versions of these files (to exclude specific repositories, for example), you can prevent the builder from updating the source files by using the :code:`-c/--custom` option.
 
 Build
 ^^^^^
 Builds base16 colorschemes for all schemes and templates. This requires the directory structure and files created by the update operation to be present in the working directory. This operation accepts three parameters:
 
 * :code:`-s/--scheme` restricts building to specific schemes
+
   Can be specified more than once. Each argument must correspond to a scheme file (sans extension).
 * :code:`-t/--template` restricts building to specific templates
+
   Can be specified more than once. Each argument must correspond to a folder name in the templates directory.
-* :code:`-o/--output` specifies a path where built colorschemes will be placed.
+* :code:`-o/--output` specifies a path where built colorschemes will be placed
+
   If this option is not specified, an "output" folder in the current working directory will be created and used.
 
 Example:
@@ -41,7 +44,17 @@ Example:
 
 Inject
 ^^^^^^
-This operation provides an easier way to quickly insert a specific colorscheme into one or more config files. You need to prepare your configuration files so that the script knows where to insert the colorscheme. This is done by including two lines in the file
+This operation provides an easier way to quickly insert a specific colorscheme into one or more config files. It accepts two parameters:
+
+* :code:`-s/--scheme` specifies the scheme you wish to injected
+
+  This argument must be specified as a path to a yaml scheme file.
+
+* :code:`-f/--file` specifies the file(s) into which you wish the scheme to be inserted
+
+  Can be specified more than once. Each argument must be specified as a path to a config file that features proper injection markers (see below).
+
+You will need to prepare your configuration files so that the script knows where to insert the colorscheme. This is done by including two lines in the file
 ::
 
     # %%base16_template: TEMPLATE_NAME##SUBTEMPLATE_NAME %%
@@ -50,7 +63,7 @@ This operation provides an easier way to quickly insert a specific colorscheme i
 
     # %%base16_template_end%%
 
-Both lines can feature arbitrary characters before the first two percentage signs. This is done to accomodate different commenting styles. Both lines need to end exactly as demonstrated above, however. Replace TEMPLATE_NAME with the name of the template you wish to insert, for example "gnome-terminal". Again, this must correspond to a folder in the templates directory. Replace SUBTEMPLATE_NAME with the name of the subtemplate as it is defined at the top level of the template's config.yaml file (see `here <https://github.com/chriskempson/base16/blob/master/file.md>`_ for details), for example "default-256". If you omit the subtemplate name (don't omit "##" though), "default" is assumed.
+Both lines can feature arbitrary characters before the first two percentage signs. This is so as to accomodate different commenting styles. Both lines need to end exactly as demonstrated above, however. The exception are "TEMPLATE_NAME" and "SUBTEMPLATE_NAME". Replace TEMPLATE_NAME with the name of the template you wish to insert, for example "gnome-terminal". As stated above, this must correspond to a folder in the templates directory. Replace SUBTEMPLATE_NAME with the name of the subtemplate as it is defined at the top level of the template's config.yaml file (see `here <https://github.com/chriskempson/base16/blob/master/file.md>`_ for details), for example "default-256". If you omit the subtemplate name (don't omit "##" though), "default" is assumed.
 
 An example of an i3 config file prepared in such a way can be found `here <https://github.com/InspectorMustache/pybase16-builder/blob/master/tests/test_config>`_.
 
