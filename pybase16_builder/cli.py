@@ -64,7 +64,7 @@ def build_mode(arg_namespace):
         builder.build(templates=temp_paths,
                       schemes=arg_namespace.scheme,
                       base_output_dir=arg_namespace.output)
-    except (builder.ResourceError, PermissionError) as exception:
+    except (LookupError, PermissionError) as exception:
         handle_exit_exception(BUILD_MODE_ID, exception)
 
 

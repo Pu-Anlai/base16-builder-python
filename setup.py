@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
       name='pybase16-builder',
-      version='0.1.5',
+      version='0.1.6',
       description='A base16 colorscheme builder for Python',
       long_description=open('README.rst').read(),
       url='https://github.com/InspectorMustache/pybase16-builder',
