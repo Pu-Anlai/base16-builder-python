@@ -105,7 +105,7 @@ def test_inject(clean_config):
     """Test injection mode."""
     test_injection = 'TEST\nINJECT\nSTRING'
     rec = injector.Recipient(clean_config)
-    assert rec.temp == 'i3##colors-only'
+    assert rec.temp == 'i3##colors'
 
     # test colorscheme return
     test_scheme_path = shared.rel_to_cwd('tests', 'test_scheme.yaml')
