@@ -5,7 +5,7 @@ Finally, a base16 builder that doesn't require me to install anything new.
 
 Installation
 ------------
-You need at least Python 3.6 because I like f-strings.
+Testing is done with versions from Python 3.4 upward. Older versions might work as well, but Python 2 won't.
 ::
     pip install pybase16-builder
 
