@@ -26,7 +26,7 @@ class TemplateGroup(object):
         templates = get_yaml_dict(config_path)
         for temp, sub in templates.items():
             mustache_path = os.path.join(get_parent_dir(config_path),
-                                         f'{temp}.mustache')
+                                         '{}.mustache'.format(temp))
             sub['parsed'] = get_pystache_parsed(mustache_path)
         return templates
 
@@ -90,18 +90,24 @@ def format_scheme(scheme, slug):
     scheme['scheme-slug'] = slug
     bases = ['base{:02X}'.format(x) for x in range(0, 16)]
     for base in bases:
-        scheme[f'{base}-hex'] = scheme.pop(base)
-        scheme[f'{base}-hex-r'] = scheme[f'{base}-hex'][0:2]
-        scheme[f'{base}-hex-g'] = scheme[f'{base}-hex'][2:4]
-        scheme[f'{base}-hex-b'] = scheme[f'{base}-hex'][4:6]
+        scheme['{}-hex'.format(base)] = scheme.pop(base)
+        scheme['{}-hex-r'.format(base)] = scheme['{}-hex'.format(base)][0:2]
+        scheme['{}-hex-g'.format(base)] = scheme['{}-hex'.format(base)][2:4]
+        scheme['{}-hex-b'.format(base)] = scheme['{}-hex'.format(base)][4:6]
 
-        scheme[f'{base}-rgb-r'] = str(int(scheme[f'{base}-hex-r'], 16))
-        scheme[f'{base}-rgb-g'] = str(int(scheme[f'{base}-hex-g'], 16))
-        scheme[f'{base}-rgb-b'] = str(int(scheme[f'{base}-hex-b'], 16))
+        scheme['{}-rgb-r'.format(base)] = str(
+            int(scheme['{}-hex-r'.format(base)], 16))
+        scheme['{}-rgb-g'.format(base)] = str(
+            int(scheme['{}-hex-g'.format(base)], 16))
+        scheme['{}-rgb-b'.format(base)] = str(
+            int(scheme['{}-hex-b'.format(base)], 16))
 
-        scheme[f'{base}-dec-r'] = str(int(scheme[f'{base}-rgb-r']) / 255)
-        scheme[f'{base}-dec-g'] = str(int(scheme[f'{base}-rgb-g']) / 255)
-        scheme[f'{base}-dec-b'] = str(int(scheme[f'{base}-rgb-b']) / 255)
+        scheme['{}-dec-r'.format(base)] = str(
+            int(scheme['{}-rgb-r'.format(base)]) / 255)
+        scheme['{}-dec-g'.format(base)] = str(
+            int(scheme['{}-rgb-g'.format(base)]) / 255)
+        scheme['{}-dec-b'.format(base)] = str(
+            int(scheme['{}-rgb-b'.format(base)]) / 255)
 
 
 def slugify(scheme_file):
