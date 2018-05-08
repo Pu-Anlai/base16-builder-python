@@ -138,7 +138,11 @@ def build_single(scheme_file, templates, base_output_dir):
             except FileExistsError:
                 pass
 
-            filename = 'base16-{}{}'.format(scheme_slug, sub['extension'])
+            if sub['extension'] is not None:
+                filename = 'base16-{}{}'.format(scheme_slug, sub['extension'])
+            else:
+                filename = 'base16-{}'.format(scheme_slug)
+
             build_path = os.path.join(output_dir, filename)
             with open(build_path, 'w') as file_:
                 file_content = pystache.render(sub['parsed'], scheme)
