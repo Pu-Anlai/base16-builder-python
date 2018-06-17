@@ -90,10 +90,11 @@ def format_scheme(scheme, slug):
     scheme['scheme-slug'] = slug
     bases = ['base{:02X}'.format(x) for x in range(0, 16)]
     for base in bases:
-        scheme['{}-hex'.format(base)] = scheme.pop(base)
-        scheme['{}-hex-r'.format(base)] = scheme['{}-hex'.format(base)][0:2]
-        scheme['{}-hex-g'.format(base)] = scheme['{}-hex'.format(base)][2:4]
-        scheme['{}-hex-b'.format(base)] = scheme['{}-hex'.format(base)][4:6]
+        value = scheme.pop(base).lower()
+        scheme['{}-hex'.format(base)] = value
+        scheme['{}-hex-r'.format(base)] = value[0:2]
+        scheme['{}-hex-g'.format(base)] = value[2:4]
+        scheme['{}-hex-b'.format(base)] = value[4:6]
 
         scheme['{}-rgb-r'.format(base)] = str(
             int(scheme['{}-hex-r'.format(base)], 16))
