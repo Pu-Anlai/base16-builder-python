@@ -12,7 +12,7 @@ class TemplateGroup(object):
 
     def __init__(self, base_path):
         self.base_path = base_path
-        self.name = os.path.basename(base_path)
+        self.name = os.path.basename(base_path.rstrip('/'))
         self.templates = self.get_templates()
 
     def get_templates(self):
