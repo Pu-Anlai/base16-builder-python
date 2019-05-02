@@ -39,10 +39,12 @@ def git_clone(git_url, path):
 
     os.makedirs(path, exist_ok=True)
     print('Start cloning from {}…'.format(git_url))
+    my_env = os.environ.copy()
+    my_env['GIT_TERMINAL_PROMPT'] = '0'
     git_proc = subprocess.Popen(['git', 'clone', git_url, path],
                                 stderr=subprocess.PIPE,
                                 stdout=subprocess.PIPE,
-                                env={'GIT_TERMINAL_PROMPT': '0'})
+                                env=my_env)
 
     try:
         stdoutmsg, stderrmsg = git_proc.communicate(timeout=120)
