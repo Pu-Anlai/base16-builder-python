@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/InspectorMustache/base16-builder-python.svg?branch=master
+    :target: https://travis-ci.org/InspectorMustache/base16-builder-python
+
 base16-builder-python
 ================
 
@@ -18,6 +21,17 @@ There are three modes of operation:
     pybase16 update
     pybase16 build
     pybase16 inject
+
+Basic Usage
+^^^^^^^^^^^
+If you just want to build all base16 colorschemes and then pick out the ones you need, simply run:
+::
+   pybase 16 update
+   pybase 16 build
+
+Once the process is finished, you can find all colorschemes in a folder named output located in the current working directory.
+
+For a more detailed explanation of the individual commands, read on.
 
 Update
 ^^^^^^
