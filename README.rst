@@ -26,8 +26,8 @@ Basic Usage
 ^^^^^^^^^^^
 If you just want to build all base16 colorschemes and then pick out the ones you need, simply run:
 ::
-   pybase 16 update
-   pybase 16 build
+   pybase16 update
+   pybase16 build
 
 Once the process is finished, you can find all colorschemes in a folder named output located in the current working directory.
 
