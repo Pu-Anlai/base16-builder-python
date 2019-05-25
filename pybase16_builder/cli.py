@@ -58,7 +58,7 @@ def run():
 
 
 argparser = argparse.ArgumentParser(prog='pybase16')
-subparsers = argparser.add_subparsers()
+subparsers = argparser.add_subparsers(dest='mode', required=True)
 
 update_parser = subparsers.add_parser(
     'update',
