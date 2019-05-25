@@ -25,8 +25,11 @@ def inject_mode(arg_namespace):
 
     try:
         injector.inject_into_files(arg_namespace.scheme, arg_namespace.file)
-    except (IndexError, FileNotFoundError,
-            PermissionError, IsADirectoryError) as exception:
+    except (IndexError, FileNotFoundError, LookupError,
+            PermissionError, IsADirectoryError, ValueError) as exception:
+        if isinstance(exception, ValueError):
+            print('Pattern {} matches more than one scheme.'.format(
+                *arg_namespace.scheme))
         if isinstance(exception, IndexError):
             print('"{}" has no valid injection marker lines.'.format(
                 exception.args[0]))
@@ -38,6 +41,9 @@ def inject_mode(arg_namespace):
         if isinstance(exception, IsADirectoryError):
             print('"{}" is a directory. Provide a *.yaml scheme file instead.'
                   .format(exception.filename))
+        if isinstance(exception, LookupError):
+            print('No scheme "{}" found.'
+                  .format(*arg_namespace.scheme))
 
 
 def update_mode(arg_namespace):
@@ -80,7 +86,7 @@ build_parser.add_argument(
     help="restrict operation to specific templates (must correspond to a directory in ./templates); can be specified more than once")
 build_parser.add_argument(
     '-s', '--scheme', action='append',
-    help='restrict operation to specific schemes (must correspond to a yaml file in ./schemes/*/); can be specified more than once')
+    help='restrict operation to specific schemes; (properly escaped) wildcards allowed')
 
 inject_parser = subparsers.add_parser(
     'inject',
@@ -90,5 +96,5 @@ inject_parser.add_argument(
     '-f', '--file', action='append', required=True,
     help='provide paths to files into which you wish to inject a colorscheme; can be specified more than once')
 inject_parser.add_argument(
-    '-s', '--scheme', required=True,
-    help='provide a path to the yaml scheme file which you wish to inject')
+    '-s', '--scheme', action='append', required=True,
+    help='select a scheme; allows for wildcards')

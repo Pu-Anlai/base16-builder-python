@@ -92,10 +92,16 @@ class Recipient():
             file_.write(self.content)
 
 
-def inject_into_files(scheme_file, files):
-    """Inject $scheme_file into list $files."""
+def inject_into_files(scheme, files):
+    """Inject $scheme into list $files."""
+    scheme_files = builder.get_scheme_files(scheme)
+    if len(scheme_files) == 0:
+        raise LookupError
+    if len(scheme_files) > 1:
+        raise ValueError
+
     for file_ in files:
         rec = Recipient(file_)
-        colorscheme = rec.get_colorscheme(scheme_file)
+        colorscheme = rec.get_colorscheme(*scheme_files)
         rec.inject_scheme(colorscheme)
         rec.write()

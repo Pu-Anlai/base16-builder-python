@@ -108,8 +108,8 @@ def test_inject(clean_config):
     assert rec.temp == 'i3##colors'
 
     # test colorscheme return
-    test_scheme_path = shared.rel_to_cwd('tests', 'test_scheme.yaml')
-    colorscheme = rec.get_colorscheme(test_scheme_path)
+    scheme_files = builder.get_scheme_files(['atelier-heath-light'])
+    colorscheme = rec.get_colorscheme(*scheme_files)
     assert colorscheme
 
     # test injection
