@@ -30,18 +30,18 @@ def inject_mode(arg_namespace):
         if isinstance(exception, ValueError):
             print('Pattern {} matches more than one scheme.'.format(
                 *arg_namespace.scheme))
-        if isinstance(exception, IndexError):
+        elif isinstance(exception, IndexError):
             print('"{}" has no valid injection marker lines.'.format(
                 exception.args[0]))
-        if isinstance(exception, FileNotFoundError):
+        elif isinstance(exception, FileNotFoundError):
             print('Lacking resource "{}" to complete operation.'.format(
                 exception.filename))
-        if isinstance(exception, PermissionError):
+        elif isinstance(exception, PermissionError):
             print('No write permission for current working directory.')
-        if isinstance(exception, IsADirectoryError):
+        elif isinstance(exception, IsADirectoryError):
             print('"{}" is a directory. Provide a *.yaml scheme file instead.'
                   .format(exception.filename))
-        if isinstance(exception, LookupError):
+        elif isinstance(exception, LookupError):
             print('No scheme "{}" found.'
                   .format(*arg_namespace.scheme))
 

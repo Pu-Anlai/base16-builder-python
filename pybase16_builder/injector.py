@@ -96,7 +96,9 @@ def inject_into_files(scheme, files):
     """Inject $scheme into list $files."""
     scheme_files = builder.get_scheme_files(scheme)
     if len(scheme_files) == 0:
-        raise LookupError
+        raise FileNotFoundError(None,
+                                None,
+                                scheme)
     if len(scheme_files) > 1:
         raise ValueError
 
