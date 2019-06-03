@@ -44,7 +44,7 @@ Builds base16 colorschemes for all schemes and templates.  This requires the dir
 
 * :code:`-s/--scheme` restricts building to specific schemes
 
-  Can be specified more than once.  Each argument must match a scheme.  Wildcards can be used but must be escaped properly so there not interpreted by the shell.
+  Can be specified more than once.  Each argument must match a scheme.  Wildcards can be used but must be escaped properly so they are not interpreted by the shell.
 
 * :code:`-t/--template` restricts building to specific templates
 
