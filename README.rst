@@ -1,8 +1,8 @@
 .. image:: https://travis-ci.org/InspectorMustache/base16-builder-python.svg?branch=master
-    :target: https://travis-ci.org/InspectorMustache/base16-builder-python
+   :target: https://travis-ci.org/InspectorMustache/base16-builder-python
 
 base16-builder-python
-================
+=====================
 
 Finally, a base16 builder that doesn't require me to install anything new.
 
@@ -10,6 +10,7 @@ Installation
 ------------
 Testing is done with versions from Python 3.4 upward.  Older versions might work as well, but Python 2 won't.
 ::
+
     pip install pybase16-builder
 
 If you don't want to clutter your computer with something that you're just going to use once you can also just clone this repository and use the provided pybase16.py file.
@@ -18,6 +19,7 @@ Usage
 -----
 There are three modes of operation:
 ::
+
     pybase16 update
     pybase16 build
     pybase16 inject
@@ -26,6 +28,7 @@ Basic Usage
 ^^^^^^^^^^^
 If you just want to build all base16 colorschemes and then pick out the ones you need, simply run:
 ::
+
    pybase16 update
    pybase16 build
 
@@ -36,7 +39,7 @@ For a more detailed explanation of the individual commands, read on.
 Update
 ^^^^^^
 Downloads all base16 schemes and templates to the current working directory.
-The source files, i.e. the files pointing to the scheme and template repositories (see `here <https://github.com/chriskempson/base16/blob/master/builder.md>`_) will also be updated by default.  If you want to use your own versions of these files (to exclude specific repositories, for example), you can prevent the builder from updating the source files by using the :code:`-c/--custom` option.
+The source files, i.e. the files pointing to the scheme and template repositories (see `builder.md <https://github.com/chriskempson/base16/blob/master/builder.md>`_) will also be updated by default.  If you want to use your own versions of these files (to exclude specific repositories, for example), you can prevent the builder from updating the source files by using the :code:`-c/--custom` option.
 
 Build
 ^^^^^
@@ -56,6 +59,7 @@ Builds base16 colorschemes for all schemes and templates.  This requires the dir
 
 Example:
 ::
+
     pybase16 build -t dunst -s atelier-heath-light -o /tmp/output
 
 Inject
@@ -79,7 +83,7 @@ You will need to prepare your configuration files so that the script knows where
 
     # %%base16_template_end%%
 
-Both lines can feature arbitrary characters before the first two percentage signs.  This is so as to accomodate different commenting styles.  Both lines need to end exactly as demonstrated above, however.  The exception are "TEMPLATE_NAME" and "SUBTEMPLATE_NAME".  Replace TEMPLATE_NAME with the name of the template you wish to insert, for example "gnome-terminal".  As stated above, this must correspond to a folder in the templates directory.  Replace SUBTEMPLATE_NAME with the name of the subtemplate as it is defined at the top level of the template's config.yaml file (see `here <https://github.com/chriskempson/base16/blob/master/file.md>`_ for details), for example "default-256".  If you omit the subtemplate name (don't omit "##" though), "default" is assumed.
+Both lines can feature arbitrary characters before the first two percentage signs.  This is so as to accomodate different commenting styles.  Both lines need to end exactly as demonstrated above, however.  The exception are "TEMPLATE_NAME" and "SUBTEMPLATE_NAME".  Replace TEMPLATE_NAME with the name of the template you wish to insert, for example "gnome-terminal".  As stated above, this must correspond to a folder in the templates directory.  Replace SUBTEMPLATE_NAME with the name of the subtemplate as it is defined at the top level of the template's config.yaml file (see `file.md <https://github.com/chriskempson/base16/blob/master/file.md>`_ for details), for example "default-256".  If you omit the subtemplate name (don't omit "##" though), "default" is assumed.
 
 An example of an i3 config file prepared in such a way can be found `here <https://github.com/InspectorMustache/pybase16-builder/blob/master/tests/test_config>`_.
 
@@ -87,4 +91,5 @@ Provide a path to the colorscheme you wish to inject by pointing to its YAML fil
 
 As an example, here's the command I use to globally change the color scheme in all applications that support it:
 ::
+
     pybase16 inject -s schemes/default/ocean.yaml -f ~/.gtkrc-2.0.mine -f ~/.config/dunst/dunstrc -f ~/.config/i3/config -f ~/.config/termite/config -f ~/.config/zathura/zathurarc
