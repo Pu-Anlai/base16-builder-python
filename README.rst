@@ -64,9 +64,9 @@ Example:
 
 Inject
 ^^^^^^
-This operation provides an easier way to quickly insert a specific colorscheme into one or more config files.  It accepts two parameters:
+This operation provides an easier way to quickly insert a specific colorscheme into one or more config files.  In order for the builder to locate the necessary files, this command relies on the folder structure created by the update command.  The command accepts two parameters:
 
-* :code:`-s/--scheme` specifies the scheme you wish to injected
+* :code:`-s/--scheme` specifies the scheme you wish to inject
 
   Refers to the scheme that should be inserted.  You can use wildcards and the same restrictions as with update apply.  A pattern that matches more than one scheme will cause an error.
 
@@ -83,13 +83,13 @@ You will need to prepare your configuration files so that the script knows where
 
     # %%base16_template_end%%
 
-Both lines can feature arbitrary characters before the first two percentage signs.  This is so as to accomodate different commenting styles.  Both lines need to end exactly as demonstrated above, however.  The exception are "TEMPLATE_NAME" and "SUBTEMPLATE_NAME".  Replace TEMPLATE_NAME with the name of the template you wish to insert, for example "gnome-terminal".  As stated above, this must correspond to a folder in the templates directory.  Replace SUBTEMPLATE_NAME with the name of the subtemplate as it is defined at the top level of the template's config.yaml file (see `file.md <https://github.com/chriskempson/base16/blob/master/file.md>`_ for details), for example "default-256".  If you omit the subtemplate name (don't omit "##" though), "default" is assumed.
+Both lines can feature arbitrary characters before the first two percentage signs.  This is so as to accomodate different commenting styles.  Both lines need to end exactly as demonstrated above, however.  "TEMPLATE_NAME" and "SUBTEMPLATE_NAME" are the exception to this.  Replace TEMPLATE_NAME with the name of the template you wish to insert, for example "gnome-terminal".  This must correspond to a folder in the templates directory.  Replace SUBTEMPLATE_NAME with the name of the subtemplate as it is defined at the top level of the template's config.yaml file (see `file.md <https://github.com/chriskempson/base16/blob/master/file.md>`_ for details), for example "default-256".  If you omit the subtemplate name (don't omit "##" though), "default" is assumed.
 
 An example of an i3 config file prepared in such a way can be found `here <https://github.com/InspectorMustache/pybase16-builder/blob/master/tests/test_config>`_.
 
-Provide a path to the colorscheme you wish to inject by pointing to its YAML file with the -s option.  Use the -f option for each file into which you want to inject the scheme.
+Specify the name of the scheme you wish to inject with the -s option.  Use the -f option for each file into which you want to inject the scheme.
 
 As an example, here's the command I use to globally change the color scheme in all applications that support it:
 ::
 
-    pybase16 inject -s schemes/default/ocean.yaml -f ~/.gtkrc-2.0.mine -f ~/.config/dunst/dunstrc -f ~/.config/i3/config -f ~/.config/termite/config -f ~/.config/zathura/zathurarc
+    pybase16 inject -s ocean -f ~/.gtkrc-2.0.mine -f ~/.config/dunst/dunstrc -f ~/.config/i3/config -f ~/.config/termite/config -f ~/.config/zathura/zathurarc
