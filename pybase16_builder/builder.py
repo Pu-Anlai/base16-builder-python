@@ -158,8 +158,12 @@ def build_single_worker(queue, templates, base_output_dir):
         scheme_file = queue.get()
         if scheme_file is None:
             break
-        build_single(scheme_file, templates, base_output_dir)
-        queue.task_done()
+        try:
+            build_single(scheme_file, templates, base_output_dir)
+        except Exception as e:
+            print('Error building {}:\n\t{}'.format(scheme_file, str(e)))
+        finally:
+            queue.task_done()
 
 
 def build_from_job_list(scheme_files, templates, base_output_dir):
@@ -188,6 +192,7 @@ def build_from_job_list(scheme_files, templates, base_output_dir):
 
     for thread in threads:
         thread.join()
+
 
 
 def build(templates=None, schemes=None, base_output_dir=None):
