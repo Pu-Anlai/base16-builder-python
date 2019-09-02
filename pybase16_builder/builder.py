@@ -1,9 +1,18 @@
 import os
+import threading
 from glob import glob
-from threading import Thread
 from queue import Queue
+from collections import namedtuple
 import pystache
 from .shared import get_yaml_dict, rel_to_cwd
+
+
+JobOptions = namedtuple('JobOptions',
+                        ['base_output_dir', 'templates', 'lock', 'job_queue'])
+ACodes = namedtuple('ACodes',
+                    ['red', 'yellow', 'bold', 'end'])
+acodes = ACodes(red='\033[31m', yellow='\033[33m',
+                bold='\033[1m', end='\033[0m')
 
 
 class TemplateGroup(object):
@@ -51,6 +60,7 @@ def get_pystache_parsed(mustache_file):
     with open(mustache_file, 'r') as file_:
         parsed = pystache.parse(file_.read())
     return parsed
+
 
 
 def get_template_dirs():
@@ -118,7 +128,26 @@ def slugify(scheme_file):
     return scheme_file_name.lower().replace(' ', '-')
 
 
-def build_single(scheme_file, templates, base_output_dir):
+def initate_job_options(base_output_dir, templates, scheme_files):
+    """Return a JobOptions object."""
+    queue = Queue()
+    for scheme in scheme_files:
+        queue.put(scheme)
+
+    return JobOptions(base_output_dir=base_output_dir,
+                      templates=templates,
+                      lock=threading.Lock(),
+                      job_queue=queue)
+
+
+def thread_print(lock, msg):
+    """Safely print to stdout from thread."""
+    lock.acquire()
+    print(msg)
+    lock.release()
+
+
+def build_single(scheme_file, job_options):
     """Build colorscheme for a single $scheme_file using all TemplateGroup
     instances in $templates."""
     scheme = get_yaml_dict(scheme_file)
@@ -126,11 +155,12 @@ def build_single(scheme_file, templates, base_output_dir):
     format_scheme(scheme, scheme_slug)
 
     scheme_name = scheme['scheme-name']
-    print('Building colorschemes for scheme "{}"…'.format(scheme_name))
-    for temp_group in templates:
+    thread_print(job_options.lock,
+                 'Building colorschemes for scheme "{}"…'.format(scheme_name))
+    for temp_group in job_options.templates:
 
         for _, sub in temp_group.templates.items():
-            output_dir = os.path.join(base_output_dir,
+            output_dir = os.path.join(job_options.base_output_dir,
                                       temp_group.name,
                                       sub['output'])
             try:
@@ -144,55 +174,65 @@ def build_single(scheme_file, templates, base_output_dir):
                 filename = 'base16-{}'.format(scheme_slug)
 
             build_path = os.path.join(output_dir, filename)
+
+            # include a warning to comply with the 0.9.1 specification
+            if os.path.isfile(build_path):
+                thread_print(
+                    job_options.lock,
+                    '{0.yellow}{0.bold}Warning{0.end}:\n'
+                    'File {1} already exists and will be overwritten.'.format(
+                        acodes, build_path))
+
             with open(build_path, 'w') as file_:
                 file_content = pystache.render(sub['parsed'], scheme)
                 file_.write(file_content)
 
-    print('Built colorschemes for scheme "{}".'.format(scheme_name))
+    thread_print(
+        job_options.lock,
+        'Built colorschemes for scheme "{}".'.format(scheme_name))
 
 
-def build_single_worker(queue, templates, base_output_dir):
+def build_single_worker(job_options):
     """Worker thread for picking up scheme files from $queue and building b16
     templates using $templates until it receives None."""
     while True:
-        scheme_file = queue.get()
+        scheme_file = job_options.job_queue.get()
         if scheme_file is None:
             break
         try:
-            build_single(scheme_file, templates, base_output_dir)
+            build_single(scheme_file, job_options)
         except Exception as e:
-            print('Error building {}:\n\t{}'.format(scheme_file, str(e)))
+            thread_print(
+                job_options.lock,
+                '{0.red}{0.bold}Error{0.end} building {1}:\n{2!s}'.format(
+                    acodes, scheme_file, e))
         finally:
-            queue.task_done()
+            job_options.job_queue.task_done()
 
 
-def build_from_job_list(scheme_files, templates, base_output_dir):
+def build_from_job_list(job_options):
     """Use $scheme_files as a job lists and build base16 templates using
     $templates (a list of TemplateGroup objects)."""
-    queue = Queue()
-    for scheme in scheme_files:
-        queue.put(scheme)
-
-    if len(scheme_files) < 40:
-        thread_num = len(scheme_files)
+    q_length = job_options.job_queue.qsize()
+    if q_length < 40:
+        thread_num = q_length
     else:
         thread_num = 40
 
     threads = []
     for _ in range(thread_num):
-        thread = Thread(target=build_single_worker,
-                        args=(queue, templates, base_output_dir))
+        thread = threading.Thread(target=build_single_worker,
+                                  args=(job_options, ))
         thread.start()
         threads.append(thread)
 
-    queue.join()
+    job_options.job_queue.join()
 
     for _ in range(thread_num):
-        queue.put(None)
+        job_options.job_queue.put(None)
 
     for thread in threads:
         thread.join()
-
 
 
 def build(templates=None, schemes=None, base_output_dir=None):
@@ -217,5 +257,6 @@ def build(templates=None, schemes=None, base_output_dir=None):
 
     templates = [TemplateGroup(path) for path in template_dirs]
 
-    build_from_job_list(scheme_files, templates, base_output_dir)
+    job_options = initate_job_options(base_output_dir, templates, scheme_files)
+    build_from_job_list(job_options)
     print('Finished building process.')
