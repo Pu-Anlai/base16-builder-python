@@ -2,17 +2,9 @@ import os
 import threading
 from glob import glob
 from queue import Queue
-from collections import namedtuple
 import pystache
-from .shared import get_yaml_dict, rel_to_cwd
-
-
-JobOptions = namedtuple('JobOptions',
-                        ['base_output_dir', 'templates', 'lock', 'job_queue'])
-ACodes = namedtuple('ACodes',
-                    ['red', 'yellow', 'bold', 'end'])
-acodes = ACodes(red='\033[31m', yellow='\033[33m',
-                bold='\033[1m', end='\033[0m')
+from .shared import (get_yaml_dict, rel_to_cwd,
+                     JobOptions, verb_msg, thread_print)
 
 
 class TemplateGroup(object):
@@ -60,7 +52,6 @@ def get_pystache_parsed(mustache_file):
     with open(mustache_file, 'r') as file_:
         parsed = pystache.parse(file_.read())
     return parsed
-
 
 
 def get_template_dirs():
@@ -140,13 +131,6 @@ def initate_job_options(base_output_dir, templates, scheme_files):
                       job_queue=queue)
 
 
-def thread_print(lock, msg):
-    """Safely print to stdout from thread."""
-    lock.acquire()
-    print(msg)
-    lock.release()
-
-
 def build_single(scheme_file, job_options):
     """Build colorscheme for a single $scheme_file using all TemplateGroup
     instances in $templates."""
@@ -177,11 +161,11 @@ def build_single(scheme_file, job_options):
 
             # include a warning to comply with the 0.9.1 specification
             if os.path.isfile(build_path):
-                thread_print(
-                    job_options.lock,
-                    '{0.yellow}{0.bold}Warning{0.end}:\n'
-                    'File {1} already exists and will be overwritten.'.format(
-                        acodes, build_path))
+                warn_msg = verb_msg(
+                    'File {} already exists and will be overwritten.'.format(
+                        build_path),
+                    lvl=1)
+                thread_print(job_options.lock, warn_msg)
 
             with open(build_path, 'w') as file_:
                 file_content = pystache.render(sub['parsed'], scheme)
@@ -202,15 +186,13 @@ def build_single_worker(job_options):
         try:
             build_single(scheme_file, job_options)
         except Exception as e:
-            thread_print(
-                job_options.lock,
-                '{0.red}{0.bold}Error{0.end} building {1}:\n{2!s}'.format(
-                    acodes, scheme_file, e))
+            err_msg = verb_msg('{}: {!s}'.format(scheme_file, e), lvl=2)
+            thread_print(job_options.lock, err_msg)
         finally:
             job_options.job_queue.task_done()
 
 
-def build_from_job_list(job_options):
+def build_from_job_options(job_options):
     """Use $scheme_files as a job lists and build base16 templates using
     $templates (a list of TemplateGroup objects)."""
     q_length = job_options.job_queue.qsize()
@@ -258,5 +240,5 @@ def build(templates=None, schemes=None, base_output_dir=None):
     templates = [TemplateGroup(path) for path in template_dirs]
 
     job_options = initate_job_options(base_output_dir, templates, scheme_files)
-    build_from_job_list(job_options)
+    build_from_job_options(job_options)
     print('Finished building process.')

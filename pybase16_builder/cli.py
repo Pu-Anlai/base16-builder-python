@@ -49,7 +49,8 @@ def inject_mode(arg_namespace):
 def update_mode(arg_namespace):
     """Check command line arguments and run update function."""
     try:
-        updater.update(custom_sources=arg_namespace.custom)
+        updater.update(custom_sources=arg_namespace.custom,
+                       verbose=arg_namespace.verbose)
     except (PermissionError, FileNotFoundError) as exception:
         if isinstance(exception, PermissionError):
             print('No write permission for current working directory.')
@@ -74,6 +75,9 @@ update_parser.set_defaults(func=update_mode)
 update_parser.add_argument(
     '-c', '--custom', action='store_const', const=True,
     help="update repositories but don't update source files")
+update_parser.add_argument(
+    '-v', '--verbose', action='store_const', const=True,
+    help='increase verbosity')
 
 build_parser = subparsers.add_parser(
     'build',
@@ -88,6 +92,9 @@ build_parser.add_argument(
 build_parser.add_argument(
     '-s', '--scheme', action='append',
     help='restrict operation to specific schemes; (properly escaped) wildcards allowed')
+build_parser.add_argument(
+    '-v', '--verbose', action='store_const', const=True,
+    help='increase verbosity')
 
 inject_parser = subparsers.add_parser(
     'inject',

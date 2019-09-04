@@ -2,9 +2,10 @@ import os
 import sys
 import subprocess
 import shutil
-from threading import Thread
+import threading
 from queue import Queue
-from .shared import get_yaml_dict, rel_to_cwd
+from .shared import (get_yaml_dict, rel_to_cwd,
+                     JobOptions, verb_msg, thread_print)
 
 
 def write_sources_file():
@@ -20,25 +21,32 @@ def write_sources_file():
         file_.write(file_content)
 
 
-def yaml_to_job_list(yaml_file, base_dir):
-    """Return a job_list consisting of git repos from $yaml_file as well as
-    their base target directory."""
+def initiate_job_options(yaml_file, base_dir, verbose):
+    """Return a JobOptions object."""
+    queue = yaml_to_queue(yaml_file, base_dir)
+    return JobOptions(lock=threading.Lock(), job_queue=queue, verbose=verbose)
+
+
+def yaml_to_queue(yaml_file, base_dir):
+    """Return a queues consisting of jobs made up of git repos from $yaml_file
+    as well as their base target directory."""
     yaml_dict = get_yaml_dict(yaml_file)
-    job_list = []
+    queue = Queue()
     for key, value in yaml_dict.items():
-        job_list.append((value, rel_to_cwd(base_dir, key)))
+        queue.put((value, rel_to_cwd(base_dir, key)))
 
-    return job_list
+    return queue
 
 
-def git_clone(git_url, path):
+def git_clone(git_url, path, job_options):
     """Clone git repository at $git_url to $path."""
     if os.path.exists(os.path.join(path, '.git')):
         # get rid of local repo if it already exists
         shutil.rmtree(path)
 
     os.makedirs(path, exist_ok=True)
-    print('Start cloning from {}…'.format(git_url))
+    thread_print(job_options.lock, 'Start cloning from {}…'.format(git_url),
+                 verbose=job_options.verbose)
     my_env = os.environ.copy()
     my_env['GIT_TERMINAL_PROMPT'] = '0'
     git_proc = subprocess.Popen(['git', 'clone', git_url, path],
@@ -53,51 +61,50 @@ def git_clone(git_url, path):
         stderrmsg = b'Timed out.'
 
     if git_proc.returncode == 0:
-        print('Cloned {}.'.format(git_url))
+        thread_print(job_options.lock, 'Cloned {}.'.format(git_url),
+                     verbose=job_options.verbose)
     else:
-        print('Error cloning from {}:\n{}'.format(git_url,
-                                                  stderrmsg.decode('utf-8')))
+        err_msg = verb_msg(
+            '{}:\n{}'.format(git_url, stderrmsg.decode('utf-8')), lvl=2)
+        thread_print(job_options.lock, err_msg)
 
 
-def git_clone_worker(queue):
+def git_clone_worker(job_options):
     """Worker thread for picking up git clone jobs from $queue until it
     receives None."""
     while True:
-        job = queue.get()
+        job = job_options.job_queue.get()
         if job is None:
             break
         git_url, path = job
-        git_clone(git_url, path)
-        queue.task_done()
+        git_clone(git_url, path, job_options)
+        job_options.job_queue.task_done()
 
 
-def git_clone_job_list(job_list):
-    """Deal with all git clone jobs in $job_list."""
-    queue = Queue()
-    for job in job_list:
-        queue.put(job)
-
-    if len(job_list) < 20:
-        thread_num = len(job_list)
+def git_clone_from_job_options(job_options):
+    """Deal with all git clone jobs on $queue."""
+    if job_options.job_queue.qsize() < 20:
+        thread_num = job_options.job_queue.qsize()
     else:
         thread_num = 20
 
     threads = []
     for _ in range(thread_num):
-        thread = Thread(target=git_clone_worker, args=(queue, ))
+        thread = threading.Thread(target=git_clone_worker,
+                                  args=(job_options, ))
         thread.start()
         threads.append(thread)
 
-    queue.join()
+    job_options.job_queue.join()
 
     for _ in range(thread_num):
-        queue.put(None)
+        job_options.job_queue.put(None)
 
     for thread in threads:
         thread.join()
 
 
-def update(custom_sources=False):
+def update(custom_sources=False, verbose=False):
     """Update function to be called from cli.py"""
     if not shutil.which('git'):
         print('Git executable not found in $PATH.')
@@ -108,14 +115,21 @@ def update(custom_sources=False):
         write_sources_file()
         print('Cloning sources…')
         sources_file = rel_to_cwd('sources.yaml')
-        jobs = yaml_to_job_list(sources_file, rel_to_cwd('sources'))
-        git_clone_job_list(jobs)
+        job_options = initiate_job_options(sources_file, rel_to_cwd('sources'),
+                                           verbose)
+        git_clone_from_job_options(job_options)
 
     print('Cloning templates…')
-    jobs = yaml_to_job_list(rel_to_cwd('sources', 'templates', 'list.yaml'),
-                            rel_to_cwd('templates'))
+    job_options = initiate_job_options(
+        rel_to_cwd('sources', 'templates', 'list.yaml'),
+        rel_to_cwd('templates'),
+        verbose)
+    git_clone_from_job_options(job_options)
+
     print('Cloning schemes…')
-    jobs.extend(yaml_to_job_list(rel_to_cwd('sources', 'schemes', 'list.yaml'),
-                                 rel_to_cwd('schemes')))
-    git_clone_job_list(jobs)
+    job_options = initiate_job_options(
+        rel_to_cwd('sources', 'schemes', 'list.yaml'), rel_to_cwd('schemes'),
+        verbose)
+
+    git_clone_from_job_options(job_options)
     print('Completed updating repositories.')
