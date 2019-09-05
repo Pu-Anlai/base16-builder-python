@@ -1,13 +1,18 @@
 import os
 import yaml
+from threading import Lock
 from collections import namedtuple
 
+
+class JobOptions():
+    """Container for options related to job processing"""
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+            self.lock = Lock()
+
+
 CWD = os.path.realpath(os.getcwd())
-job_options_fields =['base_output_dir', 'templates', 'lock', 'job_queue',
-                     'verbose']
-JobOptions = namedtuple('JobOptions', job_options_fields,
-                        defaults=[None] * len(job_options_fields))
-JobOptions._field_defaults = {x: 0 for x in JobOptions._fields}
 ACodes = namedtuple('ACodes',
                     ['red', 'yellow', 'bold', 'end'])
 acodes = ACodes(red='\033[31m', yellow='\033[33m',

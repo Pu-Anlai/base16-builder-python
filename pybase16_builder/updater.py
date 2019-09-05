@@ -21,10 +21,9 @@ def write_sources_file():
         file_.write(file_content)
 
 
-def initiate_job_options(yaml_file, base_dir, verbose):
+def initiate_job_options(**kwargs):
     """Return a JobOptions object."""
-    queue = yaml_to_queue(yaml_file, base_dir)
-    return JobOptions(lock=threading.Lock(), job_queue=queue, verbose=verbose)
+    return JobOptions(**kwargs)
 
 
 def yaml_to_queue(yaml_file, base_dir):
@@ -69,36 +68,36 @@ def git_clone(git_url, path, job_options):
         thread_print(job_options.lock, err_msg)
 
 
-def git_clone_worker(job_options):
+def git_clone_worker(queue, job_options):
     """Worker thread for picking up git clone jobs from $queue until it
     receives None."""
     while True:
-        job = job_options.job_queue.get()
+        job = queue.get()
         if job is None:
             break
         git_url, path = job
         git_clone(git_url, path, job_options)
-        job_options.job_queue.task_done()
+        queue.task_done()
 
 
-def git_clone_from_job_options(job_options):
+def git_clone_from_job_options(queue, job_options):
     """Deal with all git clone jobs on $queue."""
-    if job_options.job_queue.qsize() < 20:
-        thread_num = job_options.job_queue.qsize()
+    if queue.qsize() < 20:
+        thread_num = queue.qsize()
     else:
         thread_num = 20
 
     threads = []
     for _ in range(thread_num):
         thread = threading.Thread(target=git_clone_worker,
-                                  args=(job_options, ))
+                                  args=(queue, job_options))
         thread.start()
         threads.append(thread)
 
-    job_options.job_queue.join()
+    queue.join()
 
     for _ in range(thread_num):
-        job_options.job_queue.put(None)
+        queue.put(None)
 
     for thread in threads:
         thread.join()
@@ -115,21 +114,20 @@ def update(custom_sources=False, verbose=False):
         write_sources_file()
         print('Cloning sources…')
         sources_file = rel_to_cwd('sources.yaml')
-        job_options = initiate_job_options(sources_file, rel_to_cwd('sources'),
-                                           verbose)
-        git_clone_from_job_options(job_options)
+        queue = yaml_to_queue(sources_file, rel_to_cwd('sources'))
+        job_options = initiate_job_options(verbose=verbose)
+        git_clone_from_job_options(queue, job_options)
 
     print('Cloning templates…')
-    job_options = initiate_job_options(
-        rel_to_cwd('sources', 'templates', 'list.yaml'),
-        rel_to_cwd('templates'),
-        verbose)
-    git_clone_from_job_options(job_options)
+    queue = yaml_to_queue(rel_to_cwd('sources', 'templates', 'list.yaml'),
+                          rel_to_cwd('templates'))
+    job_options = initiate_job_options(verbose=verbose)
+    git_clone_from_job_options(queue, job_options)
 
     print('Cloning schemes…')
-    job_options = initiate_job_options(
-        rel_to_cwd('sources', 'schemes', 'list.yaml'), rel_to_cwd('schemes'),
-        verbose)
+    queue = yaml_to_queue(rel_to_cwd('sources', 'schemes', 'list.yaml'),
+                          rel_to_cwd('schemes'))
+    job_options = initiate_job_options(verbose=verbose)
 
-    git_clone_from_job_options(job_options)
+    git_clone_from_job_options(queue, job_options)
     print('Completed updating repositories.')

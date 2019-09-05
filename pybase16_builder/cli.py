@@ -11,7 +11,8 @@ def build_mode(arg_namespace):
     try:
         builder.build(templates=temp_paths,
                       schemes=arg_namespace.scheme,
-                      base_output_dir=arg_namespace.output)
+                      base_output_dir=arg_namespace.output,
+                      verbose=arg_namespace.verbose)
     except (LookupError, PermissionError) as exception:
         if isinstance(exception, LookupError):
             print('Necessary resources for building not found in current '

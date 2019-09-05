@@ -119,16 +119,18 @@ def slugify(scheme_file):
     return scheme_file_name.lower().replace(' ', '-')
 
 
-def initate_job_options(base_output_dir, templates, scheme_files):
-    """Return a JobOptions object."""
+def scheme_files_to_queue(scheme_files):
+    """Put all scheme_files on a queue so we can process them as jobs."""
     queue = Queue()
     for scheme in scheme_files:
         queue.put(scheme)
 
-    return JobOptions(base_output_dir=base_output_dir,
-                      templates=templates,
-                      lock=threading.Lock(),
-                      job_queue=queue)
+    return queue
+
+
+def initiate_job_options(**kwargs):
+    """Return a JobOptions object."""
+    return JobOptions(**kwargs)
 
 
 def build_single(scheme_file, job_options):
@@ -140,7 +142,8 @@ def build_single(scheme_file, job_options):
 
     scheme_name = scheme['scheme-name']
     thread_print(job_options.lock,
-                 'Building colorschemes for scheme "{}"…'.format(scheme_name))
+                 'Building colorschemes for scheme "{}"…'.format(scheme_name),
+                 verbose=job_options.verbose)
     for temp_group in job_options.templates:
 
         for _, sub in temp_group.templates.items():
@@ -173,14 +176,15 @@ def build_single(scheme_file, job_options):
 
     thread_print(
         job_options.lock,
-        'Built colorschemes for scheme "{}".'.format(scheme_name))
+        'Built colorschemes for scheme "{}".'.format(scheme_name),
+        verbose=job_options.verbose)
 
 
-def build_single_worker(job_options):
+def build_single_worker(queue, job_options):
     """Worker thread for picking up scheme files from $queue and building b16
     templates using $templates until it receives None."""
     while True:
-        scheme_file = job_options.job_queue.get()
+        scheme_file = queue.get()
         if scheme_file is None:
             break
         try:
@@ -189,13 +193,13 @@ def build_single_worker(job_options):
             err_msg = verb_msg('{}: {!s}'.format(scheme_file, e), lvl=2)
             thread_print(job_options.lock, err_msg)
         finally:
-            job_options.job_queue.task_done()
+            queue.task_done()
 
 
-def build_from_job_options(job_options):
+def build_from_queue(queue, job_options):
     """Use $scheme_files as a job lists and build base16 templates using
     $templates (a list of TemplateGroup objects)."""
-    q_length = job_options.job_queue.qsize()
+    q_length = queue.qsize()
     if q_length < 40:
         thread_num = q_length
     else:
@@ -204,20 +208,20 @@ def build_from_job_options(job_options):
     threads = []
     for _ in range(thread_num):
         thread = threading.Thread(target=build_single_worker,
-                                  args=(job_options, ))
+                                  args=(queue, job_options))
         thread.start()
         threads.append(thread)
 
-    job_options.job_queue.join()
+    queue.join()
 
     for _ in range(thread_num):
-        job_options.job_queue.put(None)
+        queue.put(None)
 
     for thread in threads:
         thread.join()
 
 
-def build(templates=None, schemes=None, base_output_dir=None):
+def build(templates=None, schemes=None, base_output_dir=None, verbose=False):
     """Main build function to initiate building process."""
     template_dirs = templates or get_template_dirs()
     scheme_files = get_scheme_files(schemes)
@@ -239,6 +243,11 @@ def build(templates=None, schemes=None, base_output_dir=None):
 
     templates = [TemplateGroup(path) for path in template_dirs]
 
-    job_options = initate_job_options(base_output_dir, templates, scheme_files)
-    build_from_job_options(job_options)
+    job_options = initiate_job_options(
+        base_output_dir=base_output_dir,
+        templates=templates,
+        scheme_files=scheme_files,
+        verbose=verbose)
+    queue = scheme_files_to_queue(scheme_files)
+    build_from_queue(queue, job_options)
     print('Finished building process.')
