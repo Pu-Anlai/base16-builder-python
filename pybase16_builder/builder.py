@@ -84,6 +84,13 @@ def get_scheme_files(patterns=None):
     return scheme_files
 
 
+def reverse_hex(hex_str):
+    """Reverse a hex foreground string into its background version."""
+    hex_str = ''.join(
+        [hex_str[i:i+2] for i in range(0, len(hex_str), 2)][::-1])
+    return hex_str
+
+
 def format_scheme(scheme, slug):
     """Change $scheme so it can be applied to a template."""
     scheme['scheme-name'] = scheme.pop('scheme')
@@ -95,6 +102,8 @@ def format_scheme(scheme, slug):
         scheme['{}-hex-r'.format(base)] = scheme['{}-hex'.format(base)][0:2]
         scheme['{}-hex-g'.format(base)] = scheme['{}-hex'.format(base)][2:4]
         scheme['{}-hex-b'.format(base)] = scheme['{}-hex'.format(base)][4:6]
+        scheme['{}-hex-bgr'.format(base)] = reverse_hex(
+            scheme['{}-hex'.format(base)])
 
         scheme['{}-rgb-r'.format(base)] = str(
             int(scheme['{}-hex-r'.format(base)], 16))
