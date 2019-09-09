@@ -59,7 +59,8 @@ def update(custom_sources=False, verbose=False):
         print('Git executable not found in $PATH.')
         sys.exit(1)
 
-    event_loop = asyncio.get_event_loop()
+    event_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(event_loop)
 
     if not custom_sources:
         print('Creating sources.yaml…')

@@ -203,7 +203,8 @@ def build(templates=None, schemes=None, base_output_dir=None, verbose=False):
         templates=templates,
         verbose=verbose)
 
-    event_loop = asyncio.get_event_loop()
+    event_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(event_loop)
     event_loop.run_until_complete(build_scheduler(scheme_files, job_options))
     event_loop.close()
     print('Finished building process.')
