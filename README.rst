@@ -8,7 +8,7 @@ Finally, a base16 builder that doesn't require me to install anything new.
 
 Installation
 ------------
-Testing is done with versions from Python 3.4 upward.  Older versions might work as well, but Python 2 won't.
+As this project uses async/await syntax, the lowest supported Python version is 3.5.
 ::
 
     pip install pybase16-builder
@@ -40,6 +40,7 @@ Update
 ^^^^^^
 Downloads all base16 schemes and templates to the current working directory.
 The source files, i.e. the files pointing to the scheme and template repositories (see `builder.md <https://github.com/chriskempson/base16/blob/master/builder.md>`_) will also be updated by default.  If you want to use your own versions of these files (to exclude specific repositories, for example), you can prevent the builder from updating the source files by using the :code:`-c/--custom` option.
+You can use :code:`-v/--verbose` for more detailed output.
 
 Build
 ^^^^^
@@ -56,6 +57,10 @@ Builds base16 colorschemes for all schemes and templates.  This requires the dir
 * :code:`-o/--output` specifies a path where built colorschemes will be placed
 
   If this option is not specified, an "output" folder in the current working directory will be created and used.
+
+* :code:`-v/--verbose` increases verbosity
+
+  With this option specified the builder prints out the name of each scheme as it's built.
 
 Example:
 ::
