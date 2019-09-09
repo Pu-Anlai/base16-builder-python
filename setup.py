@@ -18,8 +18,8 @@ setup(
                    'Programming Language :: Python :: 3 :: Only'
                   ],
       keywords='base16',
-      install_requires=['pystache', 'pyyaml'],
-      python_requires='>=3.4',
+      install_requires=['pystache', 'pyyaml', 'aiofiles'],
+      python_requires='>=3.5',
       entry_points={
                     'console_scripts': [
                         'pybase16 = pybase16_builder.cli:run'
