@@ -31,12 +31,6 @@ class TemplateGroup(object):
         return templates
 
 
-def transform_template(scheme, template):
-    """Apply $scheme to $template and return the result string."""
-    result = pystache.render(template, scheme)
-    return result
-
-
 def get_parent_dir(base_dir, level=1):
     "Get the directory $level levels above $base_dir."
     while level > 0:
