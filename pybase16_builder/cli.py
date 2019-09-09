@@ -3,6 +3,18 @@ from . import updater, builder, injector
 from .shared import rel_to_cwd
 
 
+def catch_keyboard_interrupt(func):
+    """Decorator for catching KeyboardInterrupt and quitting gracefully."""
+    def decorated(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except KeyboardInterrupt:
+            print('Interrupt signal received.')
+
+    return decorated
+
+
+@catch_keyboard_interrupt
 def build_mode(arg_namespace):
     """Check command line arguments and run build function."""
     custom_temps = arg_namespace.template or []
@@ -21,6 +33,7 @@ def build_mode(arg_namespace):
             print("No write permission for output directory.")
 
 
+@catch_keyboard_interrupt
 def inject_mode(arg_namespace):
     """Check command line arguments and run build function."""
 
@@ -47,6 +60,7 @@ def inject_mode(arg_namespace):
                   .format(*arg_namespace.scheme))
 
 
+@catch_keyboard_interrupt
 def update_mode(arg_namespace):
     """Check command line arguments and run update function."""
     try:
