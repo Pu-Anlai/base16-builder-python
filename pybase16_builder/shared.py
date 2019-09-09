@@ -1,6 +1,5 @@
 import os
 import yaml
-from threading import Lock
 from collections import namedtuple
 
 
@@ -9,7 +8,6 @@ class JobOptions():
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
-            self.lock = Lock()
 
 
 CWD = os.path.realpath(os.getcwd())

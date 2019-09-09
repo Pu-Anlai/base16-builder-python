@@ -1,10 +1,9 @@
 import os
-import threading
-from glob import glob
-from queue import Queue
+import asyncio
+import aiofiles
 import pystache
-from .shared import (get_yaml_dict, rel_to_cwd,
-                     JobOptions, verb_msg, thread_print)
+from glob import glob
+from .shared import get_yaml_dict, rel_to_cwd, JobOptions, verb_msg
 
 
 class TemplateGroup(object):
@@ -128,31 +127,15 @@ def slugify(scheme_file):
     return scheme_file_name.lower().replace(' ', '-')
 
 
-def scheme_files_to_queue(scheme_files):
-    """Put all scheme_files on a queue so we can process them as jobs."""
-    queue = Queue()
-    for scheme in scheme_files:
-        queue.put(scheme)
-
-    return queue
-
-
-def initiate_job_options(**kwargs):
-    """Return a JobOptions object."""
-    return JobOptions(**kwargs)
-
-
-def build_single(scheme_file, job_options):
-    """Build colorscheme for a single $scheme_file using all TemplateGroup
-    instances in $templates."""
+async def build_single(scheme_file, job_options):
     scheme = get_yaml_dict(scheme_file)
     scheme_slug = slugify(scheme_file)
     format_scheme(scheme, scheme_slug)
-
     scheme_name = scheme['scheme-name']
-    thread_print(job_options.lock,
-                 'Building colorschemes for scheme "{}"…'.format(scheme_name),
-                 verbose=job_options.verbose)
+
+    if job_options.verbose:
+        print('Building colorschemes for scheme "{}"...'.format(scheme_name))
+
     for temp_group in job_options.templates:
 
         for _, sub in temp_group.templates.items():
@@ -171,63 +154,32 @@ def build_single(scheme_file, job_options):
 
             build_path = os.path.join(output_dir, filename)
 
-            # include a warning to comply with the 0.9.1 specification
+            # include a warning for files being overwritten to comply with
+            # base16 0.9.1
             if os.path.isfile(build_path):
-                warn_msg = verb_msg(
-                    'File {} already exists and will be overwritten.'.format(
-                        build_path),
-                    lvl=1)
-                thread_print(job_options.lock, warn_msg)
+                print(verb_msg('File {} exists and will be overwritten.'.format(build_path)))
 
-            with open(build_path, 'w') as file_:
+            async with aiofiles.open(build_path, 'w') as file_:
                 file_content = pystache.render(sub['parsed'], scheme)
-                file_.write(file_content)
+                await file_.write(file_content)
 
-    thread_print(
-        job_options.lock,
-        'Built colorschemes for scheme "{}".'.format(scheme_name),
-        verbose=job_options.verbose)
+            if job_options.verbose:
+                print('Built colorschemes for scheme "{}".'.format(scheme_name))
 
 
-def build_single_worker(queue, job_options):
+async def build_single_task(scheme_file, job_options):
     """Worker thread for picking up scheme files from $queue and building b16
     templates using $templates until it receives None."""
-    while True:
-        scheme_file = queue.get()
-        if scheme_file is None:
-            break
-        try:
-            build_single(scheme_file, job_options)
-        except Exception as e:
-            err_msg = verb_msg('{}: {!s}'.format(scheme_file, e), lvl=2)
-            thread_print(job_options.lock, err_msg)
-        finally:
-            queue.task_done()
+    try:
+        await build_single(scheme_file, job_options)
+    except Exception as e:
+        print(verb_msg('{}: {!s}'.format(scheme_file, e), lvl=2))
 
 
-def build_from_queue(queue, job_options):
-    """Use $scheme_files as a job lists and build base16 templates using
-    $templates (a list of TemplateGroup objects)."""
-    q_length = queue.qsize()
-    if q_length < 40:
-        thread_num = q_length
-    else:
-        thread_num = 40
-
-    threads = []
-    for _ in range(thread_num):
-        thread = threading.Thread(target=build_single_worker,
-                                  args=(queue, job_options))
-        thread.start()
-        threads.append(thread)
-
-    queue.join()
-
-    for _ in range(thread_num):
-        queue.put(None)
-
-    for thread in threads:
-        thread.join()
+async def build_scheduler(scheme_files, job_options):
+    """Create a task list from scheme_files and run tasks asynchronously."""
+    task_list = [build_single_task(f, job_options) for f in scheme_files]
+    await asyncio.gather(*task_list)
 
 
 def build(templates=None, schemes=None, base_output_dir=None, verbose=False):
@@ -252,11 +204,12 @@ def build(templates=None, schemes=None, base_output_dir=None, verbose=False):
 
     templates = [TemplateGroup(path) for path in template_dirs]
 
-    job_options = initiate_job_options(
+    job_options = JobOptions(
         base_output_dir=base_output_dir,
         templates=templates,
-        scheme_files=scheme_files,
         verbose=verbose)
-    queue = scheme_files_to_queue(scheme_files)
-    build_from_queue(queue, job_options)
+
+    event_loop = asyncio.get_event_loop()
+    event_loop.run_until_complete(build_scheduler(scheme_files, job_options))
+    event_loop.close()
     print('Finished building process.')
