@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 import asyncio
-from .shared import get_yaml_dict, rel_to_cwd, verb_msg
+from .shared import get_yaml_dict, rel_to_cwd, verb_msg, compat_event_loop
 
 
 def write_sources_file():
@@ -59,29 +59,25 @@ def update(custom_sources=False, verbose=False):
         print('Git executable not found in $PATH.')
         sys.exit(1)
 
-    event_loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(event_loop)
+    with compat_event_loop() as event_loop:
+        if not custom_sources:
+            print('Creating sources.yaml…')
+            write_sources_file()
+            print('Cloning sources…')
+            sources_file = rel_to_cwd('sources.yaml')
+            event_loop.run_until_complete(
+                git_clone_scheduler(sources_file,
+                                    rel_to_cwd('sources'),
+                                    verbose=verbose))
 
-    if not custom_sources:
-        print('Creating sources.yaml…')
-        write_sources_file()
-        print('Cloning sources…')
-        sources_file = rel_to_cwd('sources.yaml')
-        event_loop.run_until_complete(
-            git_clone_scheduler(sources_file,
-                                rel_to_cwd('sources'),
-                                verbose=verbose))
+        print('Cloning templates…')
+        event_loop.run_until_complete(git_clone_scheduler(
+            rel_to_cwd('sources', 'templates', 'list.yaml'),
+            rel_to_cwd('templates'),
+            verbose=verbose))
 
-    print('Cloning templates…')
-    event_loop.run_until_complete(git_clone_scheduler(
-        rel_to_cwd('sources', 'templates', 'list.yaml'),
-        rel_to_cwd('templates'),
-        verbose=verbose))
-
-    print('Cloning schemes…')
-    event_loop.run_until_complete(git_clone_scheduler(
-        rel_to_cwd('sources', 'schemes', 'list.yaml'),
-        rel_to_cwd('schemes'),
-        verbose=verbose))
-
-    event_loop.close()
+        print('Cloning schemes…')
+        event_loop.run_until_complete(git_clone_scheduler(
+            rel_to_cwd('sources', 'schemes', 'list.yaml'),
+            rel_to_cwd('schemes'),
+            verbose=verbose))

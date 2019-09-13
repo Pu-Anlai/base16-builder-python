@@ -3,7 +3,8 @@ import asyncio
 import aiofiles
 import pystache
 from glob import glob
-from .shared import get_yaml_dict, rel_to_cwd, JobOptions, verb_msg
+from .shared import (get_yaml_dict, rel_to_cwd,
+                     JobOptions, verb_msg, compat_event_loop)
 
 
 class TemplateGroup(object):
@@ -203,8 +204,7 @@ def build(templates=None, schemes=None, base_output_dir=None, verbose=False):
         templates=templates,
         verbose=verbose)
 
-    event_loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(event_loop)
-    event_loop.run_until_complete(build_scheduler(scheme_files, job_options))
-    event_loop.close()
+    with compat_event_loop() as event_loop:
+        event_loop.run_until_complete(build_scheduler(scheme_files, job_options))
+
     print('Finished building process.')

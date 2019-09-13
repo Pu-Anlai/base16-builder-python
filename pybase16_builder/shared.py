@@ -1,6 +1,9 @@
 import os
+import sys
+import asyncio
 import yaml
 from collections import namedtuple
+from contextlib import contextmanager
 
 
 class JobOptions():
@@ -15,6 +18,19 @@ ACodes = namedtuple('ACodes',
                     ['red', 'yellow', 'bold', 'end'])
 acodes = ACodes(red='\033[31m', yellow='\033[33m',
                 bold='\033[1m', end='\033[0m')
+
+
+@contextmanager
+def compat_event_loop():
+    """OS agnostic context manager for an event loop."""
+    event_loop = asyncio.get_event_loop()
+    if event_loop.is_closed():
+        event_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(event_loop)
+
+    yield event_loop
+
+    event_loop.close()
 
 
 def rel_to_cwd(*args):
