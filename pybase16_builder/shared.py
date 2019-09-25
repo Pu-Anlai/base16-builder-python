@@ -23,13 +23,14 @@ acodes = ACodes(red='\033[31m', yellow='\033[33m',
 @contextmanager
 def compat_event_loop():
     """OS agnostic context manager for an event loop."""
+    if sys.platform.startswith('win'):
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
     event_loop = asyncio.get_event_loop()
+
     if event_loop.is_closed():
         event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(event_loop)
-
-    if sys.platform.startswith('win'):
-        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
     yield event_loop
 
