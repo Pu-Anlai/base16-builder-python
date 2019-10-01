@@ -24,7 +24,7 @@ class Recipient():
     def _get_temp(self, content):
         """Get the string that points to a specific base16 scheme."""
         temp = None
-        for line in content.splitlines():
+        for line in content.split('\n'):
 
             # make sure there's both start and end line
             if not temp:
@@ -67,8 +67,8 @@ class Recipient():
         """Inject string $b16_scheme into self.content."""
         # correctly formatted start and end of block should have already been
         # ascertained by _get_temp
-        content_lines = self.content.splitlines()
-        b16_scheme_lines = b16_scheme.splitlines()
+        content_lines = self.content.split('\n')
+        b16_scheme_lines = b16_scheme.split('\n')
         start_line = None
         for num, line in enumerate(content_lines):
             if not start_line:
