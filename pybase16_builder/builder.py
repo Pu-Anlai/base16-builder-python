@@ -123,10 +123,13 @@ def slugify(scheme_file):
 
 
 async def build_single(scheme_file, job_options):
+    """Build colorscheme from $scheme_file using $job_options. Return True if
+    completed without warnings. Otherwise false."""
     scheme = get_yaml_dict(scheme_file)
     scheme_slug = slugify(scheme_file)
     format_scheme(scheme, scheme_slug)
     scheme_name = scheme['scheme-name']
+    warn = False  # set this for feedback to the caller
 
     if job_options.verbose:
         print('Building colorschemes for scheme "{}"...'.format(scheme_name))
@@ -152,7 +155,8 @@ async def build_single(scheme_file, job_options):
             # include a warning for files being overwritten to comply with
             # base16 0.9.1
             if os.path.isfile(build_path):
-                print(verb_msg('File {} exists and will be overwritten.'.format(build_path)))
+                verb_msg('File {} exists and will be overwritten.'.format(build_path))
+                warn = True
 
             async with aiofiles.open(build_path, 'w') as file_:
                 file_content = pystache.render(sub['parsed'], scheme)
@@ -161,20 +165,23 @@ async def build_single(scheme_file, job_options):
             if job_options.verbose:
                 print('Built colorschemes for scheme "{}".'.format(scheme_name))
 
+    return not(warn)
+
 
 async def build_single_task(scheme_file, job_options):
     """Worker thread for picking up scheme files from $queue and building b16
     templates using $templates until it receives None."""
     try:
-        await build_single(scheme_file, job_options)
+        return await build_single(scheme_file, job_options)
     except Exception as e:
-        print(verb_msg('{}: {!s}'.format(scheme_file, e), lvl=2))
+        verb_msg('{}: {!s}'.format(scheme_file, e), lvl=2)
+        return False
 
 
 async def build_scheduler(scheme_files, job_options):
     """Create a task list from scheme_files and run tasks asynchronously."""
     task_list = [build_single_task(f, job_options) for f in scheme_files]
-    await asyncio.gather(*task_list)
+    return await asyncio.gather(*task_list)
 
 
 def build(templates=None, schemes=None, base_output_dir=None, verbose=False):
@@ -205,6 +212,8 @@ def build(templates=None, schemes=None, base_output_dir=None, verbose=False):
         verbose=verbose)
 
     with compat_event_loop() as event_loop:
-        event_loop.run_until_complete(build_scheduler(scheme_files, job_options))
+        results = event_loop.run_until_complete(
+            build_scheduler(scheme_files, job_options))
 
     print('Finished building process.')
+    return all(results)

@@ -19,7 +19,8 @@ def write_sources_file():
 
 
 async def git_clone(git_url, path, verbose=False):
-    """Clone git repository at $git_url to $path."""
+    """Clone git repository at $git_url to $path. Return True if succesful,
+    otherwise False."""
     if verbose:
         print('Cloning {}...'.format(git_url))
     if os.path.exists(os.path.join(path, '.git')):
@@ -34,17 +35,18 @@ async def git_clone(git_url, path, verbose=False):
     stdout, stderr = await git_proc.communicate()
 
     if git_proc.returncode != 0:
-        print(verb_msg(
-            '{}:\n'.format(git_url, stderr.decode('utf-8'))))
+        verb_msg('{}:\n'.format(git_url, stderr.decode('utf-8')))
+        return False
     elif verbose:
         print('Cloned {}'.format(git_url))
+    return True
 
 
 async def git_clone_scheduler(yaml_file, base_dir, verbose=False):
     """Create task list for clone jobs and run them asynchronously."""
     jobs = generate_jobs_from_yaml(yaml_file, base_dir)
     task_list = [git_clone(*args_, verbose=verbose) for args_ in jobs]
-    await asyncio.gather(*task_list)
+    return await asyncio.gather(*task_list)
 
 
 def generate_jobs_from_yaml(yaml_file, base_dir):
@@ -59,25 +61,31 @@ def update(custom_sources=False, verbose=False):
         print('Git executable not found in $PATH.')
         sys.exit(1)
 
+    results = []
     with compat_event_loop() as event_loop:
         if not custom_sources:
             print('Creating sources.yaml…')
             write_sources_file()
             print('Cloning sources…')
             sources_file = rel_to_cwd('sources.yaml')
-            event_loop.run_until_complete(
+            r = event_loop.run_until_complete(
                 git_clone_scheduler(sources_file,
                                     rel_to_cwd('sources'),
                                     verbose=verbose))
+            results.append(r)
 
         print('Cloning templates…')
-        event_loop.run_until_complete(git_clone_scheduler(
+        r = event_loop.run_until_complete(git_clone_scheduler(
             rel_to_cwd('sources', 'templates', 'list.yaml'),
             rel_to_cwd('templates'),
             verbose=verbose))
+        results.append(r)
 
         print('Cloning schemes…')
-        event_loop.run_until_complete(git_clone_scheduler(
+        r = event_loop.run_until_complete(git_clone_scheduler(
             rel_to_cwd('sources', 'schemes', 'list.yaml'),
             rel_to_cwd('schemes'),
             verbose=verbose))
+        results.append(r)
+
+    return (all(results))

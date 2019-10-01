@@ -1,6 +1,7 @@
+import sys
 import argparse
 from . import updater, builder, injector
-from .shared import rel_to_cwd
+from .shared import rel_to_cwd, err_print
 
 
 def catch_keyboard_interrupt(func):
@@ -9,7 +10,7 @@ def catch_keyboard_interrupt(func):
         try:
             func(*args, **kwargs)
         except KeyboardInterrupt:
-            print('Interrupt signal received.')
+            err_print('Interrupt signal received.')
 
     return decorated
 
@@ -21,57 +22,63 @@ def build_mode(arg_namespace):
     temp_paths = [rel_to_cwd('templates', temp) for temp in custom_temps]
 
     try:
-        builder.build(templates=temp_paths,
-                      schemes=arg_namespace.scheme,
-                      base_output_dir=arg_namespace.output,
-                      verbose=arg_namespace.verbose)
+        result = builder.build(templates=temp_paths,
+                               schemes=arg_namespace.scheme,
+                               base_output_dir=arg_namespace.output,
+                               verbose=arg_namespace.verbose)
+        # return with exit code 2 if there were any non-fatal incidents during
+        sys.exit(0 if result else 2)
+
     except (LookupError, PermissionError) as exception:
         if isinstance(exception, LookupError):
-            print('Necessary resources for building not found in current '
-                  'working directory.')
+            err_print('Necessary resources for building not found in current '
+                      'working directory.')
         if isinstance(exception, PermissionError):
-            print("No write permission for output directory.")
+            err_print("No write permission for output directory.")
 
 
 @catch_keyboard_interrupt
 def inject_mode(arg_namespace):
     """Check command line arguments and run build function."""
-
     try:
         injector.inject_into_files(arg_namespace.scheme, arg_namespace.file)
     except (IndexError, FileNotFoundError, LookupError,
             PermissionError, IsADirectoryError, ValueError) as exception:
         if isinstance(exception, ValueError):
-            print('Pattern {} matches more than one scheme.'.format(
+            err_print('Pattern {} matches more than one scheme.'.format(
                 *arg_namespace.scheme))
         elif isinstance(exception, IndexError):
-            print('"{}" has no valid injection marker lines.'.format(
+            err_print('"{}" has no valid injection marker lines.'.format(
                 exception.args[0]))
         elif isinstance(exception, FileNotFoundError):
-            print('Lacking resource "{}" to complete operation.'.format(
+            err_print('Lacking resource "{}" to complete operation.'.format(
                 exception.filename))
         elif isinstance(exception, PermissionError):
-            print('No write permission for current working directory.')
+            err_print('No write permission for current working directory.')
         elif isinstance(exception, IsADirectoryError):
-            print('"{}" is a directory. Provide a *.yaml scheme file instead.'
-                  .format(exception.filename))
+            err_print('"{}" is a directory. Provide a *.yaml scheme file instead.'
+                      .format(exception.filename))
         elif isinstance(exception, LookupError):
-            print('No scheme "{}" found.'
-                  .format(*arg_namespace.scheme))
+            err_print('No scheme "{}" found.'
+                      .format(*arg_namespace.scheme))
 
 
 @catch_keyboard_interrupt
 def update_mode(arg_namespace):
     """Check command line arguments and run update function."""
     try:
-        updater.update(custom_sources=arg_namespace.custom,
-                       verbose=arg_namespace.verbose)
+        result = updater.update(custom_sources=arg_namespace.custom,
+                                verbose=arg_namespace.verbose)
+        # return with exit code 2 if there were any non-fatal incidents during
+        # update
+        sys.exit(0 if result else 2)
+
     except (PermissionError, FileNotFoundError) as exception:
         if isinstance(exception, PermissionError):
-            print('No write permission for current working directory.')
+            err_print('No write permission for current working directory.')
         if isinstance(exception, FileNotFoundError):
-            print('Necessary resources for updating not found in current '
-                  'working directory.')
+            err_print('Necessary resources for updating not found in current '
+                      'working directory.')
 
 
 def run():

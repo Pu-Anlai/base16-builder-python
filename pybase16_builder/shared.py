@@ -53,17 +53,17 @@ def get_yaml_dict(yaml_file):
         return {}
 
 
-def thread_print(lock, msg, verbose=True):
-    """Safely print to stdout from thread."""
-    lock.acquire()
-    if verbose:
-        print(msg)
-    lock.release()
+def err_print(msg, exit_code=1):
+    """Print $msg and exit with $exit_code."""
+    print(msg, file=sys.stderr)
+    sys.exit(exit_code)
 
 
 def verb_msg(msg, lvl=1):
     """Print a warning ($lvl=1) or an error ($lvl=2) message."""
     if lvl == 1:
-        return '{0.yellow}{0.bold}Warning{0.end}:\n{1}'.format(acodes, msg)
+        print('{0.yellow}{0.bold}Warning{0.end}:\n{1}'.format(acodes, msg),
+              file=sys.stderr)
     elif lvl == 2:
-        return '{0.red}{0.bold}Error{0.end}:\n{1}'.format(acodes, msg)
+        print('{0.red}{0.bold}Error{0.end}:\n{1}'.format(acodes, msg),
+              file=sys.stderr)
