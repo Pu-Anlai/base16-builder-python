@@ -3,11 +3,11 @@ import pystache
 from . import builder
 from .shared import rel_to_cwd, get_yaml_dict
 
-TEMP_NEEDLE = re.compile(r'^.*%%base16_template:([^%]+)%%$')
-TEMP_END_NEEDLE = re.compile(r'^.*%%base16_template_end%%$')
+TEMP_NEEDLE = re.compile(r"^.*%%base16_template:([^%]+)%%$")
+TEMP_END_NEEDLE = re.compile(r"^.*%%base16_template_end%%$")
 
 
-class Recipient():
+class Recipient:
     """Represents a file into which a base16 scheme is to be injected."""
 
     def __init__(self, path):
@@ -17,14 +17,14 @@ class Recipient():
 
     def _get_file_content(self, path):
         """Return a string representation file content at $path."""
-        with open(path, 'r') as file_:
+        with open(path, "r") as file_:
             content = file_.read()
         return content
 
     def _get_temp(self, content):
         """Get the string that points to a specific base16 scheme."""
         temp = None
-        for line in content.split('\n'):
+        for line in content.split("\n"):
 
             # make sure there's both start and end line
             if not temp:
@@ -47,28 +47,26 @@ class Recipient():
         builder.format_scheme(scheme, scheme_slug)
 
         try:
-            temp_base, temp_sub = self.temp.split('##')
+            temp_base, temp_sub = self.temp.split("##")
         except ValueError:
-            temp_base, temp_sub = (self.temp.strip('##'), 'default')
+            temp_base, temp_sub = (self.temp.strip("##"), "default")
 
-        temp_path = rel_to_cwd('templates', temp_base)
+        temp_path = rel_to_cwd("templates", temp_base)
         temp_group = builder.TemplateGroup(temp_path)
         try:
             single_temp = temp_group.templates[temp_sub]
         except KeyError:
-            raise FileNotFoundError(None,
-                                    None,
-                                    self.path + ' (sub-template)')
+            raise FileNotFoundError(None, None, self.path + " (sub-template)")
 
-        colorscheme = pystache.render(single_temp['parsed'], scheme)
+        colorscheme = pystache.render(single_temp["parsed"], scheme)
         return colorscheme
 
     def inject_scheme(self, b16_scheme):
         """Inject string $b16_scheme into self.content."""
         # correctly formatted start and end of block should have already been
         # ascertained by _get_temp
-        content_lines = self.content.split('\n')
-        b16_scheme_lines = b16_scheme.split('\n')
+        content_lines = self.content.split("\n")
+        b16_scheme_lines = b16_scheme.split("\n")
         start_line = None
         for num, line in enumerate(content_lines):
             if not start_line:
@@ -81,14 +79,14 @@ class Recipient():
                     end_line = num
 
         # put lines back together
-        new_content_lines = (content_lines[0:start_line]
-                             + b16_scheme_lines
-                             + content_lines[end_line:])
-        self.content = '\n'.join(new_content_lines)
+        new_content_lines = (
+            content_lines[0:start_line] + b16_scheme_lines + content_lines[end_line:]
+        )
+        self.content = "\n".join(new_content_lines)
 
     def write(self):
         """Write content back to file."""
-        with open(self.path, 'w') as file_:
+        with open(self.path, "w") as file_:
             file_.write(self.content)
 
 
@@ -96,9 +94,7 @@ def inject_into_files(scheme, files):
     """Inject $scheme into list $files."""
     scheme_files = builder.get_scheme_files(scheme)
     if len(scheme_files) == 0:
-        raise FileNotFoundError(None,
-                                None,
-                                scheme)
+        raise FileNotFoundError(None, None, scheme)
     if len(scheme_files) > 1:
         raise ValueError
 

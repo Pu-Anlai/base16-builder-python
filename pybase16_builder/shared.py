@@ -6,24 +6,23 @@ from collections import namedtuple
 from contextlib import contextmanager
 
 
-class JobOptions():
+class JobOptions:
     """Container for options related to job processing"""
+
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
 
 CWD = os.path.realpath(os.getcwd())
-ACodes = namedtuple('ACodes',
-                    ['red', 'yellow', 'bold', 'end'])
-acodes = ACodes(red='\033[31m', yellow='\033[33m',
-                bold='\033[1m', end='\033[0m')
+ACodes = namedtuple("ACodes", ["red", "yellow", "bold", "end"])
+acodes = ACodes(red="\033[31m", yellow="\033[33m", bold="\033[1m", end="\033[0m")
 
 
 @contextmanager
 def compat_event_loop():
     """OS agnostic context manager for an event loop."""
-    if sys.platform.startswith('win'):
+    if sys.platform.startswith("win"):
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
     event_loop = asyncio.get_event_loop()
@@ -46,7 +45,7 @@ def get_yaml_dict(yaml_file):
     """Return a yaml_dict from reading yaml_file. If yaml_file is empty or
     doesn't exist, return an empty dict instead."""
     try:
-        with open(yaml_file, 'r') as file_:
+        with open(yaml_file, "r") as file_:
             yaml_dict = yaml.safe_load(file_.read()) or {}
         return yaml_dict
     except FileNotFoundError:
@@ -62,8 +61,9 @@ def err_print(msg, exit_code=1):
 def verb_msg(msg, lvl=1):
     """Print a warning ($lvl=1) or an error ($lvl=2) message."""
     if lvl == 1:
-        print('{0.yellow}{0.bold}Warning{0.end}:\n{1}'.format(acodes, msg),
-              file=sys.stderr)
+        print(
+            "{0.yellow}{0.bold}Warning{0.end}:\n{1}".format(acodes, msg),
+            file=sys.stderr,
+        )
     elif lvl == 2:
-        print('{0.red}{0.bold}Error{0.end}:\n{1}'.format(acodes, msg),
-              file=sys.stderr)
+        print("{0.red}{0.bold}Error{0.end}:\n{1}".format(acodes, msg), file=sys.stderr)
