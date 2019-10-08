@@ -39,7 +39,7 @@ def build_mode(arg_namespace):
                 "working directory."
             )
         if isinstance(exception, PermissionError):
-            err_print("No write permission for output directory.")
+            err_print("Lacking necessary access permissions for output directory.")
 
 
 @catch_keyboard_interrupt

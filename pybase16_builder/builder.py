@@ -199,7 +199,7 @@ def build(templates=None, schemes=None, base_output_dir=None, verbose=False):
     except FileExistsError:
         pass
 
-    if not os.access(base_output_dir, os.W_OK):
+    if not os.access(base_output_dir, os.W_OK | os.X_OK):
         raise PermissionError
 
     templates = [TemplateGroup(path) for path in template_dirs]
