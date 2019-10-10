@@ -44,11 +44,11 @@ You can use :code:`-v/--verbose` for more detailed output.
 
 Build
 ^^^^^
-Builds base16 colorschemes for all schemes and templates.  This requires the directory structure and files created by the update operation to be present in the working directory.  This operation accepts three parameters:
+Builds base16 colorschemes for all schemes and templates.  This requires the directory structure and files created by the update operation to be present in the working directory.  This operation accepts four parameters:
 
 * :code:`-s/--scheme` restricts building to specific schemes
 
-  Can be specified more than once.  Each argument must match a scheme.  Wildcards can be used but must be escaped properly so they are not interpreted by the shell.
+  Can be specified more than once.  Each argument must match a scheme.  Wildcards can be used but must be escaped properly so they are not expanded by the shell.
 
 * :code:`-t/--template` restricts building to specific templates
 
@@ -98,3 +98,7 @@ As an example, here's the command I use to globally change the color scheme in a
 ::
 
     pybase16 inject -s ocean -f ~/.gtkrc-2.0.mine -f ~/.config/dunst/dunstrc -f ~/.config/i3/config -f ~/.config/termite/config -f ~/.config/zathura/zathurarc
+
+Exit
+^^^^
+The program exits with exit code 1 if it encountered a general error and with 2 if one or more build or update tasks produced a warning or an error.
