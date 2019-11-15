@@ -28,8 +28,11 @@ async def git_clone(git_url, path, verbose=False):
         shutil.rmtree(path)
 
     os.makedirs(path, exist_ok=True)
+
+    proc_env = os.environ.copy()
+    proc_env["GIT_TERMINAL_PROMPT"] = "0"
     git_proc = await asyncio.create_subprocess_exec(
-        "git", "clone", git_url, path, stderr=asyncio.subprocess.PIPE
+        "git", "clone", git_url, path, stderr=asyncio.subprocess.PIPE, env=proc_env
     )
     stdout, stderr = await git_proc.communicate()
 
