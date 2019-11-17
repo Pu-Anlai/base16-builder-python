@@ -37,6 +37,12 @@ async def git_clone(git_url, path, verbose=False):
     stdout, stderr = await git_proc.communicate()
 
     if git_proc.returncode != 0:
+        # remove created directory if it's empty
+        try:
+            os.rmdir(path)
+        except OSError:
+            pass
+
         verb_msg("{}:\n{}".format(git_url, stderr.decode("utf-8")))
         return False
     elif verbose:
