@@ -74,14 +74,14 @@ def update(custom_sources=False, verbose=False):
         if not custom_sources:
             print("Creating sources.yaml…")
             write_sources_file()
-            print("Cloning sources…")
-            sources_file = rel_to_cwd("sources.yaml")
-            r = event_loop.run_until_complete(
-                git_clone_scheduler(
-                    sources_file, rel_to_cwd("sources"), verbose=verbose
-                )
+        print("Cloning sources…")
+        sources_file = rel_to_cwd("sources.yaml")
+        r = event_loop.run_until_complete(
+            git_clone_scheduler(
+                sources_file, rel_to_cwd("sources"), verbose=verbose
             )
-            results.append(r)
+        )
+        results.append(r)
 
         print("Cloning templates…")
         r = event_loop.run_until_complete(
