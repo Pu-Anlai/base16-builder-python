@@ -74,6 +74,7 @@ def update(custom_sources=False, verbose=False):
         if not custom_sources:
             print("Creating sources.yaml…")
             write_sources_file()
+
         print("Cloning sources…")
         sources_file = rel_to_cwd("sources.yaml")
         r = event_loop.run_until_complete(
