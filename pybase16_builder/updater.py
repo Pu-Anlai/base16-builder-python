@@ -26,7 +26,6 @@ async def git_clone(git_url, path, verbose=False):
     proc_env = os.environ.copy()
     proc_env["GIT_TERMINAL_PROMPT"] = "0"
     if os.path.exists(os.path.join(path, ".git")):
-        # get rid of local repo if it already exists
         _tmp = os.getcwd()
         os.chdir(path)
         git_proc = await asyncio.create_subprocess_exec(
