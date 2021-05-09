@@ -23,17 +23,23 @@ async def git_clone(git_url, path, verbose=False):
     otherwise False."""
     if verbose:
         print("Cloning {}...".format(git_url))
-    if os.path.exists(os.path.join(path, ".git")):
-        # get rid of local repo if it already exists
-        shutil.rmtree(path)
-
-    os.makedirs(path, exist_ok=True)
-
     proc_env = os.environ.copy()
     proc_env["GIT_TERMINAL_PROMPT"] = "0"
-    git_proc = await asyncio.create_subprocess_exec(
-        "git", "clone", git_url, path, stderr=asyncio.subprocess.PIPE, env=proc_env
-    )
+    if os.path.exists(os.path.join(path, ".git")):
+        # get rid of local repo if it already exists
+        _tmp = os.getcwd()
+        os.chdir(path)
+        git_proc = await asyncio.create_subprocess_exec(
+            "git", "pull", stderr=asyncio.subprocess.PIPE, env=proc_env
+        )
+        os.chdir(_tmp)
+
+    else:
+        os.makedirs(path, exist_ok=False)
+
+        git_proc = await asyncio.create_subprocess_exec(
+            "git", "clone", git_url, path, stderr=asyncio.subprocess.PIPE, env=proc_env
+        )
     stdout, stderr = await git_proc.communicate()
 
     if git_proc.returncode != 0:
