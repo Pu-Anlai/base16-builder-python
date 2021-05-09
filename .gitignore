@@ -11,3 +11,4 @@ templates
 sources.yaml
 .tags
 .cache
+.vscode/
