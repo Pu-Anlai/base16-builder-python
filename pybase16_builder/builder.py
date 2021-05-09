@@ -156,7 +156,7 @@ async def build_single(scheme_file, job_options):
                 verb_msg("File {} exists and will be overwritten.".format(build_path))
                 warn = True
 
-            async with aiofiles.open(build_path, "w") as file_:
+            async with aiofiles.open(build_path, "w", encoding="utf8") as file_:
                 file_content = pystache.render(sub["parsed"], scheme)
                 await file_.write(file_content)
 
