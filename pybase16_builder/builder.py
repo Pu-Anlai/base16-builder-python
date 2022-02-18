@@ -43,7 +43,7 @@ def get_parent_dir(base_dir, level=1):
 def get_pystache_parsed(mustache_file):
     """Return a ParsedTemplate instance based on the contents of
     $mustache_file."""
-    with open(mustache_file, "r") as file_:
+    with open(mustache_file, "r", encoding="utf-8") as file_:
         parsed = pystache.parse(file_.read())
     return parsed
 
@@ -156,7 +156,7 @@ async def build_single(scheme_file, job_options):
                 verb_msg("File {} exists and will be overwritten.".format(build_path))
                 warn = True
 
-            async with aiofiles.open(build_path, "w") as file_:
+            async with aiofiles.open(build_path, "w", encoding="utf-8") as file_:
                 file_content = pystache.render(sub["parsed"], scheme)
                 await file_.write(file_content)
 

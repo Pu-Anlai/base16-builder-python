@@ -14,7 +14,7 @@ def write_sources_file():
         "https://github.com/chriskempson/base16-templates-source.git"
     )
     file_path = rel_to_cwd("sources.yaml")
-    with open(file_path, "w") as file_:
+    with open(file_path, "w", encoding="utf-8") as file_:
         file_.write(file_content)
 
 
@@ -78,9 +78,7 @@ def update(custom_sources=False, verbose=False):
         print("Cloning sources…")
         sources_file = rel_to_cwd("sources.yaml")
         r = event_loop.run_until_complete(
-            git_clone_scheduler(
-                sources_file, rel_to_cwd("sources"), verbose=verbose
-            )
+            git_clone_scheduler(sources_file, rel_to_cwd("sources"), verbose=verbose)
         )
         results.append(r)
 

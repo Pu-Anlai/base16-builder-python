@@ -17,7 +17,7 @@ class Recipient:
 
     def _get_file_content(self, path):
         """Return a string representation file content at $path."""
-        with open(path, "r") as file_:
+        with open(path, "r", encoding="utf-8") as file_:
             content = file_.read()
         return content
 
@@ -86,7 +86,7 @@ class Recipient:
 
     def write(self):
         """Write content back to file."""
-        with open(self.path, "w") as file_:
+        with open(self.path, "w", encoding="utf-8") as file_:
             file_.write(self.content)
 
 

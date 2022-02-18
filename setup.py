@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="pybase16-builder",
-    version="0.2.7",
+    version="0.2.8",
     description="A base16 colorscheme builder for Python",
     long_description=open("README.rst").read(),
     url="https://github.com/InspectorMustache/pybase16-builder",
@@ -14,7 +14,7 @@ setup(
         "Intended Audience :: End Users/Desktop",
         "Topic :: Other/Nonlisted Topic",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3 :: Only",
     ],
     keywords="base16",
