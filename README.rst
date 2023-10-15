@@ -1,6 +1,11 @@
 .. image:: https://travis-ci.org/InspectorMustache/base16-builder-python.svg?branch=master
    :target: https://travis-ci.org/InspectorMustache/base16-builder-python
 
+Deprecated
+==========
+
+Use `base24-builder-python <https://github.com/Base24/base24-builder-python>`_ instead. Sorry to anyone who's been waiting for me to update this repo.
+
 base16-builder-python
 =====================
 
