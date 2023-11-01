@@ -89,8 +89,10 @@ def format_scheme(scheme, slug):
     scheme["scheme-name"] = scheme.pop("scheme")
     scheme["scheme-author"] = scheme.pop("author")
     scheme["scheme-slug"] = slug
-    bases = ["base{:02X}".format(x) for x in range(0, 16)]
+    bases = ["base{:02X}".format(x) for x in range(0, 24)]
     for base in bases:
+        if base not in scheme:
+            continue
         scheme["{}-hex".format(base)] = scheme.pop(base)
         scheme["{}-hex-r".format(base)] = scheme["{}-hex".format(base)][0:2]
         scheme["{}-hex-g".format(base)] = scheme["{}-hex".format(base)][2:4]
